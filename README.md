@@ -8,7 +8,7 @@ Development
 
 To get the package simply pull from the repository:
 
-    git clone https://github.com/ImpGuard/heimer.git <myproject>
+    git clone https://github.com/ImpGuard/heimer.git <project_directory>
 
 In order to install the dependencies, navigate to the project directory and use
 pip. Note using virtualenv in this example is optional:
