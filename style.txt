@@ -31,3 +31,18 @@ Ex.
     sum( sum( 1, 2, sum( 1, 2, 3 ) ), 2, sum( 1, 2, 3 ) )
     if ( "Hello", "World" ) == helloWorld():
         print "Yea!"
+- Space before and after binary operators
+
+Comment
+- Use # or triple double-quote
+- Captialize first letter
+- End with period
+- "FIX ME" exactly what it said
+- "HACK HACK" means it works but should be improved if possible
+
+Doc string
+- If what a function does and/or what it returns is not immediately obvious from its name, write a 
+doc string to clarify the purpose, parameters, return value, and examples (if needed)
+
+Misc.
+- For string, use double quote
