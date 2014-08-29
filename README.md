@@ -8,20 +8,19 @@ Development
 
 To get the package simply pull from the repository:
 
-    git clone https://github.com/ImpGuard/heimer.git <path>
+    git clone https://github.com/ImpGuard/heimer.git <myproject>
 
-In order to install the dependencies, use pip. Note using virtualenv in this
-example is optional:
+In order to install the dependencies, navigate to the project directory and use
+pip. Note using virtualenv in this example is optional:
 
-    cd <path>
     virtualenv <venv>               # Create a virtual environment if desired
     source <venv>/bin/activate      # Activate the environment if installed
     pip install -r requirements.txt # Install the necessary modules
 
 All the source files are located within the folder `heimer`. In order to test
-the script, use nose (which is installed as a dependency):
+the script, use nose within the home directory (which is installed as a
+dependency):
 
-    cd <path>
     nosetests
 
 See the documentation for [nose](https://nose.readthedocs.org/en/latest/) for
