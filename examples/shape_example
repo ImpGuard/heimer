@@ -1,0 +1,27 @@
+<options>
+    o output string
+    v verbose bool
+<formats>
+    vertex:,
+        x:int y:int z:int
+    triangle:
+        p1:vertex
+        p2:vertex
+        p3:vertex
+    line:
+        p1:vertex
+        p2:vertex
+<body>
+    (line|triangle)+
+
+EXAMPLE INPUT
+1,2,3
+1,2,3
+1,2,3
+
+1,2
+2,3
+
+1,2,3
+1,4,5
+1,5,6
