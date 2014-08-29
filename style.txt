@@ -1,13 +1,20 @@
-Line
+Lines
 - 85 (or whatever we want) character line limit
 - When splitting a line of code into multiple lines, make sure it's still easy to read and understand
 
 Naming
-- For variable names, use camel case and single-letter names are reserved for counter
-- For function name, whatever that make sense
+- Variables
+    * Ideally clear enough to understand usage of the variable.
+    * Camel case
+    * Single-letter names are counters
+- Methods & Functions
+    * Camel case
+- Files
+    * Ideally one word, comments can describe file purpose.
+    * Camel case
 
 Spacing
-- No tap, only spaces
+- No tabs, spaces only
 - 4 spaces as indent
 - Space after every comma
 Ex.
@@ -16,11 +23,11 @@ Ex.
     else:
         print "BOO"
 - Space after opening parenthesis/bracket and before closing parenthesis/bracket, but not when there
-is nothing inside the parthesis
+is only 1 or less arguments inside the parthesis
 Ex.
-    foo( 1 )
+    foo(1)
     bar()
-    map[ "Hi" ]
-    sum( 1, 2, 3 )
+    map["Hi"]
+    sum( sum( 1, 2, sum( 1, 2, 3 ) ), 2, sum( 1, 2, 3 ) )
     if ( "Hello", "World" ) == helloWorld():
         print "Yea!"
