@@ -1,137 +1,244 @@
-A Heimer input file consists of 4 tags, enclosed by angled brackets, and the
+Overview
+========
+
+The Heimer script takes a format file and generates a parser which will parse
+files of the format specified by the format file. It will be able to output
+parser code in Python, C++, and Java initially, and can potentially be extended
+in the future for different languages.
+
+Terminology
+===========
+
+The Heimer script is somewhat confusing to understand, since it parses a format
+file to generate a parser that parses files. Therefore, the following terminology
+will be observed in this specification to make it clear what is being referred to.
+
+( Format File ) => | Heimer Script | => ( Parser )
+( Input File  ) => | Parser | => ( User Actions )
+* Diagram of expected I/O sequences
+
+Format File:
+    The file that specifies command line options, Heimer specific flags, and
+    the format of the file that the Parser being generated is required to
+    parse.
+Heimer Script:
+    The script that is being written that will generate a parser from the
+    Format File provided.
+Parser:
+    The generated parser in a particular language. It should be able to parse
+    files of the format specified in the Format File.
+Input File:
+    The input file that the Parser will be able to parse. The format of these
+    files are specified in the Format File.
+User Actions:
+    The user specified actions that should occur after the Parser parses an
+    Input File.
+
+Format File format
+==================
+
+The Format File consists of 4 tags, enclosed by angled brackets, and the
 corresponding information under each tag.
 
-- The <head> tag contains Heimer-specific options and modes.
-- The <option> tag specifies command line option parsing.
-- The <single> and <multiple> tags determine how the generated program will parse and
-    store the input text, as well as which classes/structs need to be
-    programmatically generated.
-- The <body> tag specifies the format of an input file, in terms of classes specified
-    under <single> and <multiple>, or with primitive data types.
-
-########## The <head> tag ##########
-
-For now, the <head> tag only includes a delimiter option, which tells Heimer what
-symbol(s) to use when delimiting items in a single line. For instance,
-
 <head>
+    Contains Heimer-specific options and flags.
+<single>
+<multiple>
+    Specifies the format that the generated program will expect lines within
+    the Input File to look like, as well as what classes will need to be
+    programmatically generated.
+<body>
+    Specifies the format of the entire Input File, in terms of classes
+    specified under <single> and <multiple>, or with primitive data types.
+
+The <head> tag
+==============
+
+For now, the <head> tag only includes a delimiter option, which tells Heimer
+what symbol(s) to use when delimiting items in a single line. For instance,
+
+    <head>
     delimiter ","
 
-sets the global delimiter as a single comma, so the line "0,1,2,3" will be tokenized
-as ["0", "1", "2", "3"].
+sets the global delimiter as a single comma, so the line 0,1,2,3 will be
+tokenized as ["0", "1", "2", "3"].
 
-########## The <options> tag ##########
+The <options> tag
+=================
 
-The optional <options> tag designates how to parse command line options to the
+The optional <options> tag designates how to parse command line options in the
 generated program. Each line under the <options> tag must be of the format
-"FLAG ARG_NAME PRIMITIVE_TYPE", where FLAG is the flag designating the command line
-option, ARG_NAME is the variable name used to store the value, and PRIMITIVE_TYPE is
-one of int, bool or string. For instance,
 
-<options>
+    FLAG_CHAR ARG_NAME PRIMITIVE_TYPE
+
+where FLAG is the flag designating the command line option, ARG_NAME is the
+variable name used to store the value, and PRIMITIVE_TYPE is one of int, bool
+or string. For instance,
+
+    <options>
     c count int
 
-lets us know that -c is a command line option that is followed by a int. Our
-generated code will parse text following -c as an integer, and store the result as a
-global integer.
+lets us know that -c is a command line option that is followed by an int. Our
+generated code will parse text following -c as an integer, and store the
+result in a global variable called count.
 
-########## The <single> tag ##########
+The <single> tag
+================
 
-Information under the <single> tag denotes how single lines are parsed as objects.
-These specifications follow the format:
+Information under the <single> tag denotes how single lines are parsed into
+objects. These specifications follow the format:
 
-<single>
-CLASS_NAME
-    VARIABLE_NAME:PRIMITIVE_TYPE VARIABLE_NAME:PRIMITIVE_TYPE (...and so on...)
-CLASS_NAME
-    (...and so on...)
+    <single>
+    CLASS_NAME
+        VARIABLE_NAME:PRIMITIVE_TYPE VARIABLE_NAME:PRIMITIVE_TYPE (...and so on...)
+    CLASS_NAME
+        (...and so on...)
 
-where CLASS_NAME is a string indicating the name of a class, VARIABLE_NAME is the
-name of a variable, and PRIMITIVE_TYPE is one of int, string, bool, list(int),
-list(bool), or list(string). For instance,
+where CLASS_NAME is a string indicating the name of a class, VARIABLE_NAME
+is the name of a variable, and PRIMITIVE_TYPE is one of int, string, bool,
+list(int), list(bool), or list(string). For instance,
 
-<single>
-Point2D
-    x:int y:int
-Point3D
-    x:int y:int z:int
+    <single>
+    Point2D
+        x:int y:int
+    Point3D
+        x:int y:int z:int
 
-will generate two classes: Point2D and Point3D, the first of which has integer x and
-y values, and the second of which has integer x, y and z values. The line "1 2 3"
-would be parsed as a Point3D with fields x=1, y=2 and z=3 while the line "4 5" would
-be parsed as a Point2D with fields x=4, y=5
+will generate two classes: Point2D and Point3D, the first of which has
+integer x and y values, and the second of which has integer x, y and
+z values.
 
-########## The <multiple> tag ##########
+When the generated parser sees the line 1 2 3, it will parse it into a
+Point3D object with the fields set as x = 1, y = 2, and z = 3.
+Similarly, when the generated parser sees the line 4 5, it will parse it as a
+Point2D with fields x = 4 and y = 5.
 
-Information under the multiple tag denotes which objects are specified via multiple
-lines, and how they should be parsed, using the following format:
+The <multiple> tag
+==================
 
-<multiple>
-CLASS_NAME
-    VARIABLE_NAME:TYPE
-    VARIABLE_NAME:TYPE
-    (...and so on...)
-CLASS_NAME
-    (...and so on...)
+Information under the <multiple> tag denotes how multiple lines are parsed into
+objects.  These specifications follow the format:
+
+    <multiple>
+    CLASS_NAME
+        VARIABLE_NAME:TYPE
+        VARIABLE_NAME:TYPE
+        (...and so on...)
+    CLASS_NAME
+        (...and so on...)
 
 Just as before, CLASS_NAME is a string indicating the name of a class and
-VARIABLE_NAME specifies the name of a field of type TYPE. However, in the <multiple>
-case, TYPE is not restricted to only PRIMITIVE_TYPE -- a TYPE can also be any
-abstract CLASS_NAME already specified previously in the <multiple> tag, or anywhere
-in the <single> tag.
+VARIABLE_NAME specifies the name of a field of type TYPE. However, under
+the <multiple tag>, TYPE is not restricted to only PRIMITIVE_TYPE -- a
+TYPE can also be any abstract CLASS_NAME already specified previously in
+the <multiple> tag or anywhere in the <single> tag.
 
-Note that a TYPE may also indicate a collection of primitive types or previously
-defined types. In this case, TYPE is designated in the following format:
+Note that a TYPE may also indicate a collection of primitive types or
+previously defined types. In this case, TYPE is designated in the following
+format:
 
-TYPE_NAME:NUMBER(!)
+    TYPE_NAME:NUMBER(!)
 
-where TYPE_NAME is either a primitive type or a previously named class. The NUMBER
-after the TYPE_NAME specifies the number of TYPE_NAME instances we expect this class
-to contain. This NUMBER can either be a raw integer literal, a previously defined
-integer variable, or one of ["+", "*"]. "+" denotes that one or more TYPE_NAMEs must
-be parsed, and "*" allows for any number (including none) to be parsed. These
-operators are greedy, and will continue parsing TYPE_NAMEs until it reaches the end
-of file, or an item that cannot be parsed as a TYPE_NAME.
+where TYPE_NAME is either a primitive type or a previously named class. The
+NUMBER after the TYPE_NAME specifies the number of TYPE_NAME instances we
+expect this class to contain. This NUMBER can either be a raw integer
+literal, a previously defined integer variable, or one of ["+", "*"]. "+"
+denotes that one or more TYPE_NAMEs must be parsed, and "*" allows for any
+number (including none) to be parsed. These operators are greedy, and will
+continue parsing TYPE_NAMEs until it reaches the end of file, or an item that
+cannot be parsed as a TYPE_NAME.
 
-Additionally, appending "!" to the end of the NUMBER lets Heimer know that there is
-an extra newline character ("\n") between each parsed item. Lets consider the
-following example, where a Point2D is an "x y" pair on a single line.
+Additionally, appending "!" to the end of the NUMBER lets Heimer know that
+there is an extra newline character ("\n") between each parsed item.
 
-<multiple>
-Line2D
-    p1:Point2D
-    p2:Point2D
-Path2D
-    lines:Line2D:+!
+Lets consider the following example, where a Point2D is an "x y" pair on a
+single line (as defined in the <single> example above).
 
-In this case, a Path2D has a collection of Line2D that consists of at least 1 line,
-as denoted by the "+". Additionally, each Line2D is separated by an additional
-newline character, as denoted by the "!". Thus, the following would parse as a Path2D
-with 3 lines:
+    <multiple>
+    Line2D
+        p1:Point2D
+        p2:Point2D
+    Path2D
+        lines:Line2D:+!
 
-0 0
-1 2
+In this case, a Path2D has a collection of Line2D that consists of at least 1
+line, as denoted by the "+". Additionally, each Line2D is separated by an
+additional newline character, as denoted by the "!". Thus, the following would
+parse as a Path2D with 3 lines:
 
-1 2
-4 0
+    0 0
+    1 2
 
-4 0
-2 1
+    1 2
+    4 0
 
-########## The <body> tag ##########
+    4 0
+    2 1
 
-The body tag describes the overall layout of the input file, in terms of both
+The resulting parser would ultimately create a Path2D object containing a
+collection (dependent on the language) of Line2D objects, each of which would
+contain the corresponding p1 and p2 Point2D objects and their x, y values.
+
+    Path2D
+        Line2D
+            p1
+                x = 0
+                y = 0
+            p2
+                x = 1
+                y = 2
+        Line2D
+            p1
+                x = 1
+                y = 2
+            p2
+                x = 4
+                y = 0
+        Line2D
+            p1
+                x = 4
+                y = 0
+            p2
+                x = 2
+                y = 1
+
+The <body> tag
+==============
+
+The body tag describes the overall layout of the Input File, in terms of both
 primitives and classes specified in the previous sections. Information under the
 <body> tag follows this format:
 
-<body>
-VARIABLE_NAME:TYPE
-VARIABLE_NAME:TYPE
-(...and so on...)
+    <body>
+    VARIABLE_NAME:TYPE
+    VARIABLE_NAME:TYPE
+    (...and so on...)
 
-where VARIABLE_NAME is a string indicating the name of a global variable of type TYPE
-in the generated code that will be used to store the data. As with the <body> tag,
-the TYPE consists of a TYPE_NAME that may be a primitive or declared class name, as
-well as a NUMBER representing the number of TYPE_NAMEs to parse, if applicable. The
-order in which the variable names and types are declared determine the order in which
-they must be parsed.
+where VARIABLE_NAME is a string indicating the name of a global variable of
+type TYPE in the generated code that will be used to store the data. As with
+the <multiple> tag, the TYPE consists of a TYPE_NAME that may be a primitive or
+declared class name, as well as a NUMBER representing the number of TYPE_NAMEs
+to parse, if applicable. The order in which the variable names and types are
+declared determine the order in which they must be parsed.
+
+Additionally, an empty line between items in this section may be used to specify
+that there will be an additional newline character ("\n") between items in this
+section.
+
+Consider the following example, using the classes defined in the <single> and
+<multiple> sections above (Point2D, Line2D, and Path2D):
+
+    <body>
+    numberOfLines:int
+
+    lines:Line2D:numberOfLines!
+
+    numberOfPaths:int
+
+    paths:Path2D:numberOfPaths!
+
+^^ WOH WEIRD THIS IS GONNA BE A PROBLEM! Though, idea! Can we use this counting
+syntax in the multiple tag above to? Seems like you already said we could, but
+which ints will be allowed if we're talking about the section above? (<multiple>)
+Perhaps we only allow ints that are defined within the object itself only?
+
