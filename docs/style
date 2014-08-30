@@ -10,8 +10,10 @@ Naming
 - Methods & Functions
     * Camel case
 - Files
-    * Ideally one word, comments can describe file purpose.
+    * Ideally one word, comments can describe file purpose
     * Camel case
+- Classes
+    * Camel case with first letter capitalized
 
 Spacing
 - No tabs, spaces only
