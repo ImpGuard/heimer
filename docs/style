@@ -1,6 +1,6 @@
 Lines
-- 85 (or whatever we want) character line limit
-- When splitting a line of code into multiple lines, make sure it's still easy to read and understand
+- When splitting a line of code into multiple lines, make sure it's still easy
+  to read and understand
 
 Naming
 - Variables
@@ -48,13 +48,16 @@ Ex.
     if ("Answer to the universe" == 42): # Answers the most important question of all
         print "Yes"
 - Special comments should be used for special cases:
-    * "FIX ME" for code that does not work at the moment
-    * "HACK HACK" for code that isn't pristine and should be rewritten if there is time
+    * "FIX ME" for code that does not work at the moment "HACK HACK" for code
+    * that isn't pristine and should be rewritten if there is time
 
 Doc Strings
 - Docstrings use triple double-quote
-- If what a function does and/or what it returns is not immediately obvious from its name, write a
-doc string to clarify the purpose, parameters, return value, and examples (if needed)
+- Use a docstring for every class to quickly explain the purpose of the class.
+- Use a docstring for every file to quickly explain the purpose of the file.
+- If what a function does and/or what it returns is not immediately obvious
+  from its name, write a doc string to clarify the purpose, parameters, return
+  value, and examples (if needed).
 
 Misc.
 - For string, use double quote
