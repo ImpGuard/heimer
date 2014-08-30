@@ -16,6 +16,9 @@ pip. Note using virtualenv in this example is optional:
     virtualenv <venv>               # Create a virtual environment if desired
     source <venv>/bin/activate      # Activate the environment if installed
     pip install -r requirements.txt # Install the necessary modules
+    ...
+    ...
+    deactivate                      # Leave the virtual environment when work is finished
 
 All the source files are located within the folder `heimer`. In order to test
 the script, use nose within the home directory (which is installed as a
