@@ -1,0 +1,27 @@
+A Heimer input file consists of ? tags, enclosed by angled brackets, and the
+corresponding information under each tag. These tags are as follows:
+
+########## The <options> tag ##########
+
+The optional <options> tag designates how to parse command line options to the
+generated program. Each line under the <options> tag must be of the format
+"FLAG ARG_NAME PRIMITIVE_TYPE", where FLAG is the flag designating the command line
+option, ARG_NAME is the variable name used to store the value, and PRIMITIVE_TYPE is
+one of int, bool or string. For instance:
+
+<options>
+    c count int
+
+lets us know that -c is a command line option that is followed by a int. Our
+generated code will parse text following -c as an integer, and store the result as a
+global integer.
+
+########## The <objects> tag ##########
+
+The <objects> tag determines how the generated program will parse and store the input
+text. Namely, information under this tag denotes which objects need to be generated,
+as well as the names and types of the objects' fields. The order in which these
+fields are specified determines the order in which we parse the input.
+
+Additionally, an object may either span multiple (one or more) lines, or just a
+single line. Objects that always span a single line are
