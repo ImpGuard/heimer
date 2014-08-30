@@ -1,5 +1,24 @@
-A Heimer input file consists of ? tags, enclosed by angled brackets, and the
-corresponding information under each tag. These tags are as follows:
+A Heimer input file consists of 4 tags, enclosed by angled brackets, and the
+corresponding information under each tag.
+
+- The <head> tag contains Heimer-specific options and modes.
+- The <option> tag specifies command line option parsing.
+- The <single> and <multiple> tags determine how the generated program will parse and
+    store the input text, as well as which classes/structs need to be
+    programmatically generated.
+- The <body> tag specifies the format of an input file, in terms of classes specified
+    under <single> and <multiple>, or with primitive data types.
+
+########## The <head> tag ##########
+
+For now, the <head> tag only includes a delimiter option, which tells Heimer what
+symbol(s) to use when delimiting items in a single line. For instance,
+
+<head>
+    delimiter ","
+
+sets the global delimiter as a single comma, so the line "0,1,2,3" will be tokenized
+as ["0", "1", "2", "3"].
 
 ########## The <options> tag ##########
 
@@ -7,7 +26,7 @@ The optional <options> tag designates how to parse command line options to the
 generated program. Each line under the <options> tag must be of the format
 "FLAG ARG_NAME PRIMITIVE_TYPE", where FLAG is the flag designating the command line
 option, ARG_NAME is the variable name used to store the value, and PRIMITIVE_TYPE is
-one of int, bool or string. For instance:
+one of int, bool or string. For instance,
 
 <options>
     c count int
@@ -16,12 +35,103 @@ lets us know that -c is a command line option that is followed by a int. Our
 generated code will parse text following -c as an integer, and store the result as a
 global integer.
 
-########## The <objects> tag ##########
+########## The <single> tag ##########
 
-The <objects> tag determines how the generated program will parse and store the input
-text. Namely, information under this tag denotes which objects need to be generated,
-as well as the names and types of the objects' fields. The order in which these
-fields are specified determines the order in which we parse the input.
+Information under the <single> tag denotes how single lines are parsed as objects.
+These specifications follow the format:
 
-Additionally, an object may either span multiple (one or more) lines, or just a
-single line. Objects that always span a single line are
+<single>
+CLASS_NAME
+    VARIABLE_NAME:PRIMITIVE_TYPE VARIABLE_NAME:PRIMITIVE_TYPE (...and so on...)
+CLASS_NAME
+    (...and so on...)
+
+where CLASS_NAME is a string indicating the name of a class, VARIABLE_NAME is the
+name of a variable, and PRIMITIVE_TYPE is one of int, string, bool, list(int),
+list(bool), or list(string). For instance,
+
+<single>
+Point2D
+    x:int y:int
+Point3D
+    x:int y:int z:int
+
+will generate two classes: Point2D and Point3D, the first of which has integer x and
+y values, and the second of which has integer x, y and z values. The line "1 2 3"
+would be parsed as a Point3D with fields x=1, y=2 and z=3 while the line "4 5" would
+be parsed as a Point2D with fields x=4, y=5
+
+########## The <multiple> tag ##########
+
+Information under the multiple tag denotes which objects are specified via multiple
+lines, and how they should be parsed, using the following format:
+
+<multiple>
+CLASS_NAME
+    VARIABLE_NAME:TYPE
+    VARIABLE_NAME:TYPE
+    (...and so on...)
+CLASS_NAME
+    (...and so on...)
+
+Just as before, CLASS_NAME is a string indicating the name of a class and
+VARIABLE_NAME specifies the name of a field of type TYPE. However, in the <multiple>
+case, TYPE is not restricted to only PRIMITIVE_TYPE -- a TYPE can also be any
+abstract CLASS_NAME already specified previously in the <multiple> tag, or anywhere
+in the <single> tag.
+
+Note that a TYPE may also indicate a collection of primitive types or previously
+defined types. In this case, TYPE is designated in the following format:
+
+TYPE_NAME:NUMBER(!)
+
+where TYPE_NAME is either a primitive type or a previously named class. The NUMBER
+after the TYPE_NAME specifies the number of TYPE_NAME instances we expect this class
+to contain. This NUMBER can either be a raw integer literal, a previously defined
+integer variable, or one of ["+", "*"]. "+" denotes that one or more TYPE_NAMEs must
+be parsed, and "*" allows for any number (including none) to be parsed. These
+operators are greedy, and will continue parsing TYPE_NAMEs until it reaches the end
+of file, or an item that cannot be parsed as a TYPE_NAME.
+
+Additionally, appending "!" to the end of the NUMBER lets Heimer know that there is
+an extra newline character ("\n") between each parsed item. Lets consider the
+following example, where a Point2D is an "x y" pair on a single line.
+
+<multiple>
+Line2D
+    p1:Point2D
+    p2:Point2D
+Path2D
+    lines:Line2D:+!
+
+In this case, a Path2D has a collection of Line2D that consists of at least 1 line,
+as denoted by the "+". Additionally, each Line2D is separated by an additional
+newline character, as denoted by the "!". Thus, the following would parse as a Path2D
+with 3 lines:
+
+0 0
+1 2
+
+1 2
+4 0
+
+4 0
+2 1
+
+########## The <body> tag ##########
+
+The body tag describes the overall layout of the input file, in terms of both
+primitives and classes specified in the previous sections. Information under the
+<body> tag follows this format:
+
+<body>
+VARIABLE_NAME:TYPE
+VARIABLE_NAME:TYPE
+(...and so on...)
+
+where VARIABLE_NAME is a string indicating the name of a global variable of type TYPE
+in the generated code that will be used to store the data. As with the <body> tag,
+the TYPE consists of a TYPE_NAME that may be a primitive or declared class name, as
+well as a NUMBER representing the number of TYPE_NAMEs to parse, if applicable. The
+order in which the variable names and types are declared determine the order in which
+they must be parsed.

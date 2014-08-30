@@ -1,0 +1,29 @@
+<head>
+delimiter ","
+
+<single>
+Adjacency
+    vertex:int neighbors:list(int)
+
+<multiple>
+Graph
+    name:string
+    adjacencies:Adjacency:+
+
+<body>
+graphs:Graph:+!
+
+EXAMPLE INPUT
+simple_graph
+0,1,2,3
+1,0
+2,0,3
+3,0,2
+
+unconnected_graph
+0,2,3
+1
+2,0,3,4,5
+3,0,2
+4,2,5
+5,2,4

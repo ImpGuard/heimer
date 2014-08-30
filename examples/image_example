@@ -1,14 +1,15 @@
-<formats>
-    Size:
-        x:int y:int
-    ImageMetadata:
-        name:string
-        size:size
-    PixelData:
-        list:int
+<single>
+Size
+    x:int y:int
+
+<multiple>
+ImageHeader
+    name:string
+    size:Size
+
 <body>
-    ImageMetadata
-    PixelData+
+header:ImageHeader
+data:list(int):+
 
 EXAMPLE INPUT
 cat

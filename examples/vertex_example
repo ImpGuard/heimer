@@ -1,10 +1,12 @@
 <options>
-    o output string
-<formats>
-    vertex:
-        x:int y:int z:int
+o output string
+
+<single>
+Vertex
+    x:int y:int z:int
+
 <body>
-    vertex+
+vertices:Vertex:+
 
 EXAMPLE INPUT
 1 2 3
