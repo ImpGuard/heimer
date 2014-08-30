@@ -1,0 +1,61 @@
+MULTIPLE
+<single>
+vertex
+    x:int y:int
+<multiple>
+path
+    points:vertex:+
+<body>
+count:int
+
+mypath:path:2!
+
+Ex:
+2
+
+1 2
+3 4
+5 6
+
+7 8
+9 10
+
+MULTIPLE
+<single>
+vertex
+    x:int y:int
+<multiple>
+line
+    p1:vertex
+    p2:vertex
+tri
+    p1:vertex
+    p2:vertex
+    p3:vertex
+<body>
+count1:int
+
+triangles:tri:count1!
+
+lines:line:*!
+
+Ex:
+3
+
+3 2
+4 5
+2 3
+
+1 1
+2 2
+3 3
+
+5 6
+5 6
+4 5
+
+1 1
+2 2
+
+4 4
+5 5
