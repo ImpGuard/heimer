@@ -8,6 +8,8 @@ v verbose bool
 <single>
 Vertex
     x:int y:int z:int
+Foo
+    f:string g:int
 
 <multiple>
 Triangle
@@ -18,15 +20,15 @@ Triangle
 <body>
 triangles:Triangle:+!
 
-EXAMPLE INPUT
-1,2,3
-1,2,3
-1,2,3
+# EXAMPLE INPUT
+# 1,2,3
+# 1,2,3
+# 1,2,3
 
-1,2,6
-7,5,4
-2,3,8
+# 1,2,6
+# 7,5,4
+# 2,3,8
 
-1,2,3
-1,4,5
-1,5,6
+# 1,2,3
+# 1,4,5
+# 1,5,6
