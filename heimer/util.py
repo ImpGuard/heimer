@@ -6,7 +6,7 @@ class HeimerFile:
     indentString = "    "
 
     def __init__ ( self, name ):
-        self.internalFile = open ( name, 'w' )
+        self.internalFile = open ( name, "w" )
         self.indentLevel = 0
 
     def indent():
