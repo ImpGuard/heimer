@@ -2,16 +2,16 @@ Overview
 ========
 
 The Heimer script takes a format file and generates a parser which will parse
-files of the format specified by the format file. It will be able to output
-parser code in Python, C++, and Java initially, and can potentially be extended
-in the future for different languages.
+files of the format specified by the format file. It supports generating parser 
+code in python, c++, and java which can be extended to other languages in the 
+future.
 
 Terminology
 ===========
 
 The Heimer script is somewhat confusing to understand, since it parses a format
 file to generate a parser that parses files. Therefore, the following terminology
-will be observed in this specification to make it clear what is being referred to.
+will be used in this specification to make it clear what is being referred to.
 
 ( Format File ) => | Heimer Script | => ( Parser )
 ( Input File  ) => | Parser | => ( User Actions )
