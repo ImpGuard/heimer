@@ -8,8 +8,6 @@ v verbose bool
 <single>
 Vertex
     x:int y:int z:int
-Foo
-    f:string g:int
 
 <multiple>
 Triangle

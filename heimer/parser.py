@@ -1,3 +1,5 @@
+import re
+
 class StringConstants:
 
     HEAD_TAG = "<head>"
@@ -14,6 +16,13 @@ class StringConstants:
     LIST_TYPE = "list"
     SEPARATE_BY_ADDITIONAL_NEWLINE_MODE = "!"
 
+class RegexPatterns:
+
+    DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"$")
+    OPTION = re.compile(r"^(\w+)\s+(\w+)\s+(\w+)$")
+    CLASS_NAME = re.compile(r"^\w+$")
+    SINGLE_FIELD = re.compile(r"^(\w+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*(\w+)\s*\)|\w+)\s+")
+
 def lineStartsValidTag(line):
     return line == StringConstants.HEAD_TAG or \
         line == StringConstants.OPTIONS_TAG or \
@@ -25,42 +34,45 @@ def stripCommentsAndWhitespaceFromLine(line):
     # FIXME: Allow using "#" as a separator in <head> tag.
     firstInlineCommentIndex = line.find(StringConstants.INLINE_COMMENT)
     if firstInlineCommentIndex == -1:
-        return line
+        return line.strip()
     return line[:firstInlineCommentIndex].strip()
-
-class CommandLineOption:
-
-    def __init__( self, flagName, variableName, typeName ):
-        self.flagName = flagName
-        self.variableName = variableName
-        self.typeName = typeName
 
 class Type:
 
     def __init__( self, rawName ):
         # Remove whitespace from the raw name.
         # FIXME: Do not allow types such as "s tri ng" to be parsed.
-        self.name = rawName.split(r"\s").join("")
+        self.name = "".join(rawName.split())
 
-    def isInteger():
+    def isInteger(self):
         return self.name == StringConstants.INTEGER_TYPE
 
-    def isFloat():
+    def isFloat(self):
         return self.name == StringConstants.FLOAT_TYPE
 
-    def isString():
+    def isString(self):
         return self.name == StringConstants.STRING_TYPE
 
-    def isBool():
+    def isBool(self):
         return self.name == StringConstants.BOOL_TYPE
 
-    def isList():
+    def isList(self):
         return self.name.find(StringConstants.LIST_TYPE) == 0 and \
             self.name[len(StringConstants.LIST_TYPE)] == "(" and \
             self.name[-1] == ")"
 
-    def listType():
+    def listType(self):
         return Type(self.name[ len(StringConstants.LIST_TYPE) : len(self.name) - 1 ]) if self.isList() else None
+
+    def isPrimitive(self):
+        return self.isInteger() or self.isFloat() or self.isString() or self.isBool()
+
+class CommandLineOption:
+
+    def __init__( self, flagName, variableName, optionType ):
+        self.flagName = flagName
+        self.variableName = variableName
+        self.optionType = optionType
 
 class Variable:
 
@@ -89,36 +101,33 @@ class UserDefinedInputClass:
 
 class HeadTag:
 
-    def __init__(self):
-        self.delimiterString = StringConstants.DEFAULT_SINGLE_LINE_DELIMITER
-
-    def setDelimiter( self, delimiterString ):
-        self.delimiterString = delimiterString
+    def __init__( self, delimiter=StringConstants.DEFAULT_SINGLE_LINE_DELIMITER ):
+        self.lineDelimiter = delimiter
 
 class OptionsTag:
 
     def __init__(self):
-        self.options = []
+        self.commandLineOptions = []
 
-    def addCommandLineOption( flagName, variableName, typeName ):
-        self.options.append(CommandLineOption( flagName, variableName, typeName ))
+    def addCommandLineOption( self, flagName, variableName, optionType ):
+        self.commandLineOptions.append(CommandLineOption( flagName, variableName, optionType ))
 
 class SingleTag:
 
-    def __init__( self, lineDelimiter ):
+    def __init__( self, lineDelimiter=StringConstants.DEFAULT_SINGLE_LINE_DELIMITER ):
         self.classes = []
         self.lineDelimiter = lineDelimiter
 
-    def addUserDefinedInputClass(className):
-        self.classes.append(className)
+    def addUserDefinedInputClass( self, inputClass ):
+        self.classes.append(inputClass)
 
 class MultipleTag:
 
     def __init__(self):
         self.classes = []
 
-    def addUserDefinedInputClass(className):
-        self.classes.append(className)
+    def addUserDefinedInputClass( self, inputClass ):
+        self.classes.append(inputClass)
 
 class BodyTag:
 
@@ -128,39 +137,106 @@ class BodyTag:
     def addGlobalVariable( self, globalVariable ):
         self.globalVariables.append(globalVariable)
 
-class HeimerInputParser:
+class HeimerInputFileParser:
 
-    def __init__( self, heimerInputFileName ):
+    def __init__( self, inputFileName ):
         self.tagLineMarkerIntervals = {}
-        self.parseFailureMessage = ""
-        self.parsingFailed = False
+        self.failureMessage = ""
+        self.failed = False
         try:
-            heimerFile = open( heimerInputFileName, "r" )
-            self.heimerInputAsLines = heimerFile.read().split("\n")
+            heimerFile = open( inputFileName, "r" )
+            self.inputAsLines = heimerFile.read().split("\n")
             heimerFile.close()
         except IOError:
-            failParsingWithMessage("Could not find file " + heimerInputFileName + ".")
-            self.heimerInputAsLines = []
+            self.failParsingWithMessage("Could not find file " + inputFileName + ".")
+            self.inputAsLines = []
         self.computeTagIntervals()
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
-            failParsingWithMessage("Input file requires a body tag.")
+            self.failParsingWithMessage("Input file requires a body tag.")
 
-    def failParsingWithMessage(message):
-        if not parsingFailed:
-            self.parsingFailed = True
-            self.parseFailureMessage = message
+    def headTag(self):
+        headTag = HeadTag()
+        if StringConstants.HEAD_TAG not in self.tagLineMarkerIntervals:
+            return headTag
+        headTagBeginMarker, headTagEndMarker = self.tagLineMarkerIntervals[StringConstants.HEAD_TAG]
+        for lineMarker in xrange( headTagBeginMarker + 1, headTagEndMarker ):
+            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.inputAsLines[lineMarker])
+            if not currentStrippedLine:
+                continue
+            delimiterMatchResults = RegexPatterns.DELIMITER.match(currentStrippedLine)
+            if delimiterMatchResults is None:
+                return self.failParsingWithMessage("Expected delimiter declaration.", lineMarker)
+            headTag.lineDelimiter = delimiterMatchResults.group(1)
+        return headTag
+
+    def optionsTag(self):
+        optionsTag = OptionsTag()
+        if StringConstants.OPTIONS_TAG not in self.tagLineMarkerIntervals:
+            return optionsTag
+        optionsTagBeginMarker, optionsTagEndMarker = self.tagLineMarkerIntervals[StringConstants.OPTIONS_TAG]
+        for lineMarker in xrange( optionsTagBeginMarker + 1, optionsTagEndMarker ):
+            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.inputAsLines[lineMarker])
+            if not currentStrippedLine:
+                continue
+            optionsMatchResults = RegexPatterns.OPTION.match(currentStrippedLine)
+            if optionsMatchResults is None:
+                return self.failParsingWithMessage("Expected command line option.", lineMarker)
+            optionType = Type(optionsMatchResults.group(3))
+            if not optionType.isPrimitive():
+                return self.failParsingWithMessage("Expected primitive type.", lineMarker)
+            optionsTag.addCommandLineOption( optionsMatchResults.group(1), optionsMatchResults.group(2), optionType )
+        return optionsTag
+
+    def singleTag(self):
+        singleTag = SingleTag()
+        if StringConstants.SINGLE_TAG not in self.tagLineMarkerIntervals:
+            return singleTag
+        lineMarker, singleTagEndMarker = self.tagLineMarkerIntervals[StringConstants.SINGLE_TAG]
+        while lineMarker < singleTagEndMarker - 1:
+            lineMarker += 1
+            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.inputAsLines[lineMarker])
+            if not currentStrippedLine:
+                continue
+            if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
+                return self.failParsingWithMessage("Expected class declaration.", lineMarker)
+            singleLineClass = UserDefinedInputClass(currentStrippedLine, False)
+            while lineMarker < singleTagEndMarker - 1:
+                lineMarker += 1
+                currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.inputAsLines[lineMarker])
+                if not currentStrippedLine:
+                    continue
+                # HACK: We should change the field regex to not require this.
+                currentStrippedLine += " "
+                fieldMatchResults = RegexPatterns.SINGLE_FIELD.match(currentStrippedLine)
+                while fieldMatchResults:
+                    variable = Variable( fieldMatchResults.group(1), Type(fieldMatchResults.group(2)) )
+                    singleLineClass.addFieldFromVariable(variable)
+                    currentStrippedLine = currentStrippedLine[fieldMatchResults.end():]
+                    fieldMatchResults = RegexPatterns.SINGLE_FIELD.match(currentStrippedLine)
+                if currentStrippedLine.strip():
+                    self.failParsingWithMessage("Expected field declaration.", lineMarker)
+            singleTag.addUserDefinedInputClass(singleLineClass)
+        return singleTag
+
+    def failParsingWithMessage( self, message, lineMarker=None ):
+        if not self.failed:
+            self.failed = True
+            self.failureMessage = "Error: " + message
+            if lineMarker is not None:
+                self.failureMessage += "\n  at line " + str(lineMarker) +  ": \"" + self.inputAsLines[lineMarker] + "\""
+        return None
 
     def nextTagLocationFromLineMarker( self, marker ):
-        while marker < len(self.heimerInputAsLines):
-            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.heimerInputAsLines[marker])
+        while marker < len(self.inputAsLines):
+            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.inputAsLines[marker])
             if lineStartsValidTag(currentStrippedLine):
                 return marker
             marker += 1
-        return len(self.heimerInputAsLines)
+        return len(self.inputAsLines)
 
     def firstLineMarkerWithText(self):
         marker = 0
-        for line in self.heimerInputAsLines:
+        for line in self.inputAsLines:
             if stripCommentsAndWhitespaceFromLine(line):
                 return marker
             marker += 1
@@ -168,13 +244,13 @@ class HeimerInputParser:
 
     def computeTagIntervals(self):
         lineMarkerBegin = self.firstLineMarkerWithText()
-        if lineMarkerBegin >= len(self.heimerInputAsLines):
-            return failParsingWithMessage("Input file empty or commented out.")
-        if not lineStartsValidTag(self.heimerInputAsLines[lineMarkerBegin]):
-            return failParsingWithMessage("Expected tag at line " + str(lineMarkerBegin) + ".")
-        while lineMarkerBegin < len(self.heimerInputAsLines):
-            if self.heimerInputAsLines[lineMarkerBegin] in self.tagLineMarkerIntervals:
-                return failParsingWithMessage("Duplicate tag name at line " + str(lineMarkerBegin) + ".")
+        if lineMarkerBegin >= len(self.inputAsLines):
+            return self.failParsingWithMessage("Input file empty or commented out.")
+        if not lineStartsValidTag(self.inputAsLines[lineMarkerBegin]):
+            return self.failParsingWithMessage("Expected tag declaration.", lineMarkerBegin)
+        while lineMarkerBegin < len(self.inputAsLines):
+            if self.inputAsLines[lineMarkerBegin] in self.tagLineMarkerIntervals:
+                return self.failParsingWithMessage("Duplicate tag name.", lineMarkerBegin)
             lineMarkerEnd = self.nextTagLocationFromLineMarker(lineMarkerBegin + 1)
-            self.tagLineMarkerIntervals[self.heimerInputAsLines[lineMarkerBegin]] = ( lineMarkerBegin, lineMarkerEnd )
+            self.tagLineMarkerIntervals[self.inputAsLines[lineMarkerBegin]] = ( lineMarkerBegin, lineMarkerEnd )
             lineMarkerBegin = lineMarkerEnd
