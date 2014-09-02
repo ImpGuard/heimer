@@ -6,7 +6,7 @@ class HeimerFile:
     indentString = "    "
 
     def __init__( self, name ):
-        self.fileName = name
+        self.filename = name
         self.fileContents = ""
         self.indentLevel = 0
 
@@ -23,7 +23,7 @@ class HeimerFile:
         self.write(line + "\n")
 
     def save(self):
-        outputFile = open( self.fileName, "a")
+        outputFile = open( self.filename, "a")
         outputFile.write(self.fileContents)
         self.fileContents = ""
         outputFile.close()
@@ -35,8 +35,8 @@ class VirtualMachine:
         self.files = dict()
         self.currentFile = None
 
-    def openFile( self, fileName ):
-        self.files[filename] = HeimerFile()
+    def openFile( self, filename ):
+        self.files[filename] = HeimerFile(filename)
         self.currentFile = self.files[filename]
 
     def switchTo( self, filename ):
@@ -54,8 +54,8 @@ class VirtualMachine:
     def dedent(self):
         self.currentFile.dedent()
 
-    def save():
-        for heimerFile in self.files:
-            heimerFile.save()
+    def save(self):
+        for filename in self.files:
+            self.files[filename].save()
 
 
