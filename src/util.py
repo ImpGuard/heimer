@@ -5,26 +5,57 @@ class HeimerFile:
 
     indentString = "    "
 
-    def __init__ ( self, name ):
-        self.internalFile = open ( name, "w" )
+    def __init__( self, name ):
+        self.fileName = name
+        self.fileContents = ""
         self.indentLevel = 0
 
-    def indent():
+    def indent(self):
         self.indentLevel += 1
 
-    def dedent():
+    def dedent(self):
         self.indentLevel -= 1
 
-    def write (line):
-        self.internalFile.write (HeimerFile.indentString * self.indentLevel + line)
+    def write( self, line ):
+        self.fileContents += HeimerFile.indentString * self.indentLevel + line
 
-    def writeLine (line):
-        self.write (line + "\n")
+    def writeLine( self, line ):
+        self.write(line + "\n")
 
-    def close():
-        self.internalFile.close()
+    def save(self):
+        outputFile = open( self.fileName, "a")
+        outputFile.write(self.fileContents)
+        self.fileContents = ""
+        outputFile.close()
 
 class VirtualMachine:
     """ Helper class for code generation to abstract out file editing logic. """
 
-    pass
+    def __init__(self):
+        self.files = dict()
+        self.currentFile = None
+
+    def openFile( self, fileName ):
+        self.files[filename] = HeimerFile()
+        self.currentFile = self.files[filename]
+
+    def switchTo( self, filename ):
+        self.currentFile = self.files[filename]
+
+    def write( self, line ):
+        self.currentFile.write(line)
+
+    def writeLine( self, line ):
+        self.currentFile.writeLine(line)
+
+    def indent(self):
+        self.currentFile.indent()
+
+    def dedent(self):
+        self.currentFile.dedent()
+
+    def save():
+        for heimerFile in self.files:
+            heimerFile.save()
+
+
