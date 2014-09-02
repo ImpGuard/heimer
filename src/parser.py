@@ -92,7 +92,7 @@ class Variable:
         self.newlinesAfterLastInstance = 0
 
     def __str__(self):
-        return str(( self.name, self.inputType, self.instanceRepititionModeString,
+        return str(( self.name, str(self.inputType), self.instanceRepititionModeString,
             self.shouldSeparateInstancesByAdditionalNewline, self.newlinesAfterLastInstance ))
 
 class UserDefinedClass:
@@ -104,6 +104,14 @@ class UserDefinedClass:
 
     def addFieldFromVariable( self, variable ):
         self.fields.append(variable)
+
+    def __str__(self):
+        result = "class " + self.name + "\n"
+        result += "  multiline: " + str(self.maySpanMultipleLines) + "\n"
+        result += "  fields:\n"
+        for field in self.fields:
+            result += "    " + str(field) + "\n"
+        return result[:-1]
 
 class HeimerFormat:
 
@@ -126,9 +134,27 @@ class HeimerFormat:
     def addVariable( self, variable ):
         self.variables.append(variable)
 
+    def __str__(self):
+        result = str([ str(option) for option in self.commandLineOptions ]) + "\n\n"
+        if len(self.singleLineClasses) > 0:
+            result += userDefinedClassesAsString(self.singleLineClasses) + "\n\n"
+        if len(self.multipleLineClasses) > 0:
+            result += userDefinedClassesAsString(self.multipleLineClasses) + "\n\n"
+        for variable in self.variables:
+            result += "- " + str(variable) + "\n"
+        return result[:-1]
+
+def userDefinedClassesAsString(classes):
+    if len(classes) == 0:
+        return ""
+    result = ""
+    for userClass in classes:
+        result += "\n" + str(userClass)
+    return result[1:]
+
 def makeVariableFromRegexGroups(groups):
     variable = Variable( groups[0], Type(groups[1]) )
-    variable.instanceRepititionModeString = groups[-2] if groups[-2] else None
+    variable.instanceRepititionModeString = groups[-2] if groups[-2] else ""
     variable.shouldSeparateInstancesByAdditionalNewline = groups[-1] == StringConstants.SEPARATE_BY_ADDITIONAL_NEWLINE_MODE
     return variable
 
@@ -147,7 +173,7 @@ class HeimerFormatFileParser:
             self.formatInputAsLines = []
         self.computeTagIntervals()
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
-            self.pushFailureMessage("Input file requires a body tag.")
+            return self.pushFailureMessage("Input file requires a body tag.")
         self.parseAllTags()
 
     def parseAllTags(self):
