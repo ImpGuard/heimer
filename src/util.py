@@ -24,4 +24,7 @@ class HeimerFile:
     def close():
         self.internalFile.close()
 
+class VirtualMachine:
+    """ Helper class for code generation to abstract out file editing logic. """
 
+    pass
