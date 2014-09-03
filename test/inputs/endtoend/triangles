@@ -1,0 +1,32 @@
+<head>
+delimiter ","
+
+<options>
+o output string
+v verbose bool
+
+<single>
+Vertex
+    x:int y:int z:int
+
+<multiple>
+Triangle
+    p1:Vertex
+    p2:Vertex
+    p3:Vertex
+
+<body>
+triangles:Triangle:+!
+
+# EXAMPLE INPUT
+# 1,2,3
+# 1,2,3
+# 1,2,3
+
+# 1,2,6
+# 7,5,4
+# 2,3,8
+
+# 1,2,3
+# 1,4,5
+# 1,5,6

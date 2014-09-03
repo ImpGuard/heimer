@@ -1,0 +1,7 @@
+<multiple>
+Path
+    count:int
+    points:Point:count
+
+<body>
+path:Path

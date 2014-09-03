@@ -1,0 +1,13 @@
+<head>
+            delimiter     ","
+<single>
+    Point
+        x:int y:int
+
+<multiple>
+
+Path
+count:int
+p:Point:count
+<body>
+                path:Path

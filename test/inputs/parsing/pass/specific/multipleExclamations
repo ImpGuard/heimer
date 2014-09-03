@@ -1,0 +1,14 @@
+<multiple>
+Junk:
+    numbers:int:*!
+<body>
+junk:Junk
+
+# EXAMPLE INPUT
+# 1
+#
+# 2
+#
+# 5
+#
+# 8

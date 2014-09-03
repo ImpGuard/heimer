@@ -1,0 +1,9 @@
+<body>
+count:int
+words:list(string):count
+
+# EXAMPLE INPUT
+# 3
+# this is a test
+# foobar
+# all your base

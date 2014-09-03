@@ -1,0 +1,15 @@
+<body>
+count:int
+
+name:string
+telephone:string
+
+zipcode:int
+
+# EXAMPLE INPUT
+# 5
+#
+# Bob
+# 999-999-999
+#
+# 99999

@@ -1,0 +1,10 @@
+<single>
+Point
+    x:int y:int
+
+<multiplex>
+Path
+    points:Point:*
+
+<body>
+path:Path
