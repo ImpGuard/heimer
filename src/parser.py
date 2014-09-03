@@ -113,7 +113,7 @@ class UserDefinedClass:
             result += "    " + str(field) + "\n"
         return result[:-1]
 
-class HeimerFormat:
+class HeimerObjectModel:
 
     def __init__(self):
         self.lineDelimiter = StringConstants.DEFAULT_SINGLE_LINE_DELIMITER
@@ -163,7 +163,7 @@ class HeimerFormatFileParser:
     def __init__( self, formatFileName ):
         self.tagLineMarkerIntervals = {}
         self.failureMessages = []
-        self.format = HeimerFormat()
+        self.format = HeimerObjectModel()
         try:
             heimerFile = open( formatFileName, "r" )
             self.formatInputAsLines = heimerFile.read().split("\n")
