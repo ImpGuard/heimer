@@ -206,7 +206,6 @@ class HeimerFormatFileParser:
                 classDecl.addFieldsAsLine(fields)
             self.objectModel.addClass(classDecl)
 
-    # FIXME: Allow <body> to declare multiple fields on the same line.
     def parseBodyTag(self):
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
             return
