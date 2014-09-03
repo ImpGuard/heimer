@@ -1,7 +1,7 @@
 <options>
 o output string
 
-<single>
+<objects>
 Vertex
     x:int y:int z:int
 

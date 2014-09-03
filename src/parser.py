@@ -4,8 +4,7 @@ class StringConstants:
 
     HEAD_TAG = "<head>"
     OPTIONS_TAG = "<options>"
-    SINGLE_TAG = "<single>"
-    MULTIPLE_TAG = "<multiple>"
+    OBJECTS_TAG = "<objects>"
     BODY_TAG = "<body>"
     INLINE_COMMENT = "#"
     DEFAULT_SINGLE_LINE_DELIMITER = " "
@@ -24,15 +23,12 @@ class RegexPatterns:
     DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"$")
     OPTION = re.compile(r"^(\w+)\s+(\w+)\s+(\w+)$")
     CLASS_NAME = re.compile(r"^\w+$")
-    SINGLE_FIELD = re.compile(r"^(\w+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*(\w+)\s*\)|\w+)\s+")
-    MULTIPLE_FIELD = re.compile(r"^(\w+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*(\w+)\s*\)|\w+)(:(\w+|\+|\*)(\!)?)?$")
-    BODY_VARIABLE = re.compile(r"^(\w+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*(\w+)\s*\)|\w+)(:(\w+|\+|\*)(\!)?)?$")
+    FIELD = re.compile(r"^(\w+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*(\w+)\s*\)|\w+)(:(\w+|\+|\*)(\!)?)?\s*")
 
 def lineStartsValidTag(line):
     return line == StringConstants.HEAD_TAG or \
         line == StringConstants.OPTIONS_TAG or \
-        line == StringConstants.SINGLE_TAG or \
-        line == StringConstants.MULTIPLE_TAG or \
+        line == StringConstants.OBJECTS_TAG or \
         line == StringConstants.BODY_TAG
 
 def stripCommentsAndWhitespaceFromLine(line):
@@ -41,28 +37,6 @@ def stripCommentsAndWhitespaceFromLine(line):
     if firstInlineCommentIndex == -1:
         return line.strip()
     return line[:firstInlineCommentIndex].strip()
-
-# FIXME: Deprecated. Delegate to type-checker.
-# class HeimerType:
-
-#     def __init__( self, rawName ):
-#         # Remove whitespace from the raw name.
-#         # FIXME: Do not allow types such as "s tri ng" to be parsed.
-#         self.name = "".join(rawName.split())
-
-#     def __str__(self):
-#         return self.name
-
-# FIXME: Deprecated. Delegate to type-checker.
-# class PrimitiveType(HeimerType):
-
-#     def isList(self):
-#         return self.name.find(StringConstants.LIST_TYPE) == 0 and \
-#             self.name[len(StringConstants.LIST_TYPE)] == "(" and \
-#             self.name[-1] == ")"
-
-#     def listType(self):
-#         return PrimitiveType(self.name[ len(StringConstants.LIST_TYPE) : len(self.name) - 1 ]) if self.isList() else None
 
 class CommandLineOption:
 
@@ -93,20 +67,17 @@ class ClassDeclaration:
         self.name = name
         self.lines = []
 
-    def addFieldToLastLine( self, field ):
-        if len(self.lines) == 0:
-            self.lines.append(list())
-        self.lines[-1].append(field)
-
-    def addFieldToNewLine( self, field ):
-        self.lines.append([ field, ])
+    def addFieldsAsLine( self, fields ):
+        self.lines.append(fields)
 
     def __str__(self):
         result = "class " + self.name + "\n"
         for line in self.lines:
+            result += "  -"
             for field in line:
-                result += "  - " + str(field) + "\n"
-        return result
+                result += "  " + str(field)
+            result += "\n"
+        return result[:-1]
 
 class HeimerObjectModel:
 
@@ -123,7 +94,9 @@ class HeimerObjectModel:
         self.classes.append(inputClass)
 
     def __str__(self):
-        result = str([ str(option) for option in self.commandLineOptions ]) + "\n\n"
+        result = ""
+        if len(self.commandLineOptions):
+            result += str([ str(option) for option in self.commandLineOptions ]) + "\n"
         if len(self.classes) > 0:
             result += userDefinedClassesAsString(self.classes) + "\n"
         result += str(self.body)
@@ -137,11 +110,21 @@ def userDefinedClassesAsString(classes):
         result += "\n" + str(userClass)
     return result[1:]
 
-def makeFieldFromRegexGroups(groups):
-    field = FieldDeclaration( groups[0], groups[1] )
-    field.instanceRepititionModeString = groups[-2] if groups[-2] else ""
-    field.shouldSeparateInstancesByAdditionalNewline = groups[-1] == StringConstants.SEPARATE_BY_ADDITIONAL_NEWLINE_MODE
-    return field
+def fieldDeclarationsFromLine(line):
+    fields = []
+    fieldMatchResult = RegexPatterns.FIELD.match(line)
+    while fieldMatchResult and len(fieldMatchResult.groups()) in [ 5, 6 ]:
+        regexGroups = fieldMatchResult.groups()
+        field = FieldDeclaration( regexGroups[0], regexGroups[1] )
+        field.instanceRepititionModeString = regexGroups[-2] if regexGroups[-2] else ""
+        field.shouldSeparateInstancesByAdditionalNewline = regexGroups[-1] == StringConstants.SEPARATE_BY_ADDITIONAL_NEWLINE_MODE
+        fields.append(field)
+        line = line[fieldMatchResult.end():]
+        fieldMatchResult = RegexPatterns.FIELD.match(line)
+    if line.strip():
+        # Unidentified tokens at end of line; invalidate field decls altogether.
+        return []
+    return fields
 
 class HeimerFormatFileParser:
 
@@ -164,8 +147,7 @@ class HeimerFormatFileParser:
     def parseAllTags(self):
         self.parseHeadTag()
         self.parseOptionsTag()
-        self.parseSingleTag()
-        self.parseMultipleTag()
+        self.parseObjectsTag()
         self.parseBodyTag()
 
     def parseHeadTag(self):
@@ -195,10 +177,10 @@ class HeimerFormatFileParser:
             optionType = optionsMatchResults.group(3)
             self.objectModel.addCommandLineOption( optionsMatchResults.group(1), optionsMatchResults.group(2), optionType )
 
-    def parseSingleTag(self):
-        if StringConstants.SINGLE_TAG not in self.tagLineMarkerIntervals:
+    def parseObjectsTag(self):
+        if StringConstants.OBJECTS_TAG not in self.tagLineMarkerIntervals:
             return
-        lineMarker, singleTagEndMarker = self.tagLineMarkerIntervals[StringConstants.SINGLE_TAG]
+        lineMarker, singleTagEndMarker = self.tagLineMarkerIntervals[StringConstants.OBJECTS_TAG]
         while lineMarker < singleTagEndMarker - 1:
             lineMarker += 1
             currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
@@ -206,7 +188,7 @@ class HeimerFormatFileParser:
                 continue
             if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
                 return self.pushFailureMessage( "Expected class declaration.", lineMarker )
-            singleLineClass = ClassDeclaration(currentStrippedLine)
+            classDecl = ClassDeclaration(currentStrippedLine)
             while lineMarker < singleTagEndMarker - 1:
                 lineMarker += 1
                 currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
@@ -215,44 +197,13 @@ class HeimerFormatFileParser:
                 if RegexPatterns.CLASS_NAME.match(currentStrippedLine):
                     lineMarker -= 1
                     break
-                # HACK: We should change the field regex to not require this.
-                currentStrippedLine += " "
-                fieldMatchResults = RegexPatterns.SINGLE_FIELD.match(currentStrippedLine)
-                while fieldMatchResults:
-                    variable = FieldDeclaration( fieldMatchResults.group(1), fieldMatchResults.group(2) )
-                    singleLineClass.addFieldToLastLine(variable)
-                    currentStrippedLine = currentStrippedLine[fieldMatchResults.end():]
-                    fieldMatchResults = RegexPatterns.SINGLE_FIELD.match(currentStrippedLine)
-                if currentStrippedLine.strip():
-                    self.pushFailureMessage( "Expected field declaration.", lineMarker )
-            self.objectModel.addClass(singleLineClass)
+                fields = fieldDeclarationsFromLine(currentStrippedLine)
+                if len(fields) == 0:
+                    return self.pushFailureMessage( "Expected field declaration for \"%s\"" % (classDecl.name,), lineMarker )
+                classDecl.addFieldsAsLine(fields)
+            self.objectModel.addClass(classDecl)
 
-    def parseMultipleTag(self):
-        if StringConstants.MULTIPLE_TAG not in self.tagLineMarkerIntervals:
-            return
-        lineMarker, multipleTagEndMarker = self.tagLineMarkerIntervals[StringConstants.MULTIPLE_TAG]
-        while lineMarker < multipleTagEndMarker - 1:
-            lineMarker += 1
-            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
-            if not currentStrippedLine:
-                continue
-            if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
-                return self.pushFailureMessage( "Expected class declaration.", lineMarker )
-            multipleLineClass = ClassDeclaration(currentStrippedLine)
-            while lineMarker < multipleTagEndMarker - 1:
-                lineMarker += 1
-                currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
-                if not currentStrippedLine:
-                    continue
-                if RegexPatterns.CLASS_NAME.match(currentStrippedLine):
-                    lineMarker -= 1
-                    break
-                fieldMatchResults = RegexPatterns.MULTIPLE_FIELD.match(currentStrippedLine)
-                if not fieldMatchResults or len(fieldMatchResults.groups()) not in [ 5, 6 ]:
-                    return self.pushFailureMessage( "Expected field declaration.", lineMarker )
-                multipleLineClass.addFieldToNewLine(makeFieldFromRegexGroups(fieldMatchResults.groups()))
-            self.objectModel.addClass(multipleLineClass)
-
+    # FIXME: Allow <body> to declare multiple fields on the same line.
     def parseBodyTag(self):
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
             return
@@ -264,11 +215,11 @@ class HeimerFormatFileParser:
                 if previousVariable:
                     previousVariable.newlinesAfterLastInstance += 1
                 continue
-            variableMatchResult = RegexPatterns.BODY_VARIABLE.match(currentStrippedLine)
-            if not variableMatchResult:
-                return self.pushFailureMessage( "Expected variable declaration.", lineMarker )
-            previousVariable = makeFieldFromRegexGroups(variableMatchResult.groups())
-            self.objectModel.body.addFieldToNewLine(previousVariable)
+            fields = fieldDeclarationsFromLine(currentStrippedLine)
+            if len(fields) == 0:
+                return self.pushFailureMessage( "Expected field declaration for body.", lineMarker )
+            previousVariable = fields[-1]
+            self.objectModel.body.addFieldsAsLine(fields)
         if previousVariable:
             previousVariable.newlinesAfterLastInstance = 0
 
@@ -280,7 +231,7 @@ class HeimerFormatFileParser:
     def pushFailureMessage( self, message, lineMarker=None ):
         failureMessage = "Error: " + message
         if lineMarker is not None:
-            failureMessage += "\n  at line " + str(lineMarker) +  ": \"" + self.formatInputAsLines[lineMarker] + "\""
+            failureMessage += "\n  at line " + str(lineMarker + 1) +  ": \"" + self.formatInputAsLines[lineMarker] + "\""
         self.failureMessages.append(failureMessage)
 
     def nextTagLocationFromLineMarker( self, marker ):

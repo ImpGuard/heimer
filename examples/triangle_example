@@ -5,11 +5,10 @@ delimiter ","
 o output string
 v verbose bool
 
-<single>
+<objects>
 Vertex
     x:int y:int z:int
 
-<multiple>
 Triangle
     p1:Vertex
     p2:Vertex

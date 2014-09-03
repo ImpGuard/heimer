@@ -1,11 +1,10 @@
 <head>
 delimiter ","
 
-<single>
+<objects>
 Adjacency
     vertex:int neighbors:list(int)
 
-<multiple>
 Graph
     name:string
     adjacencies:Adjacency:+
