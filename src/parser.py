@@ -14,10 +14,13 @@ class StringConstants:
     STRING_TYPE = "string"
     BOOL_TYPE = "bool"
     LIST_TYPE = "list"
+    LINE_ONE_OR_MORE = "+"
+    LINE_ZERO_OR_MORE = "*"
     SEPARATE_BY_ADDITIONAL_NEWLINE_MODE = "!"
 
 class RegexPatterns:
 
+    # FIXME: Handle underscores in variable names.
     DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"$")
     OPTION = re.compile(r"^(\w+)\s+(\w+)\s+(\w+)$")
     CLASS_NAME = re.compile(r"^\w+$")
@@ -39,38 +42,27 @@ def stripCommentsAndWhitespaceFromLine(line):
         return line.strip()
     return line[:firstInlineCommentIndex].strip()
 
-class Type:
+# FIXME: Deprecated. Delegate to type-checker.
+# class HeimerType:
 
-    def __init__( self, rawName ):
-        # Remove whitespace from the raw name.
-        # FIXME: Do not allow types such as "s tri ng" to be parsed.
-        self.name = "".join(rawName.split())
+#     def __init__( self, rawName ):
+#         # Remove whitespace from the raw name.
+#         # FIXME: Do not allow types such as "s tri ng" to be parsed.
+#         self.name = "".join(rawName.split())
 
-    def isInteger(self):
-        return self.name == StringConstants.INTEGER_TYPE
+#     def __str__(self):
+#         return self.name
 
-    def isFloat(self):
-        return self.name == StringConstants.FLOAT_TYPE
+# FIXME: Deprecated. Delegate to type-checker.
+# class PrimitiveType(HeimerType):
 
-    def isString(self):
-        return self.name == StringConstants.STRING_TYPE
+#     def isList(self):
+#         return self.name.find(StringConstants.LIST_TYPE) == 0 and \
+#             self.name[len(StringConstants.LIST_TYPE)] == "(" and \
+#             self.name[-1] == ")"
 
-    def isBool(self):
-        return self.name == StringConstants.BOOL_TYPE
-
-    def isList(self):
-        return self.name.find(StringConstants.LIST_TYPE) == 0 and \
-            self.name[len(StringConstants.LIST_TYPE)] == "(" and \
-            self.name[-1] == ")"
-
-    def listType(self):
-        return Type(self.name[ len(StringConstants.LIST_TYPE) : len(self.name) - 1 ]) if self.isList() else None
-
-    def isPrimitive(self):
-        return self.isInteger() or self.isFloat() or self.isString() or self.isBool()
-
-    def __str__(self):
-        return self.name
+#     def listType(self):
+#         return PrimitiveType(self.name[ len(StringConstants.LIST_TYPE) : len(self.name) - 1 ]) if self.isList() else None
 
 class CommandLineOption:
 
@@ -82,67 +74,60 @@ class CommandLineOption:
     def __str__(self):
         return str(( self.flagName, self.variableName, str(self.optionType) ))
 
-class Variable:
+class FieldDeclaration:
 
-    def __init__( self, name, inputType ):
+    def __init__( self, name, typeName ):
         self.name = name
-        self.inputType = inputType
+        self.typeName = typeName
         self.instanceRepititionModeString = ""
         self.shouldSeparateInstancesByAdditionalNewline = False
         self.newlinesAfterLastInstance = 0
 
     def __str__(self):
-        return str(( self.name, str(self.inputType), self.instanceRepititionModeString,
+        return str(( self.name, self.typeName, self.instanceRepititionModeString,
             self.shouldSeparateInstancesByAdditionalNewline, self.newlinesAfterLastInstance ))
 
-class UserDefinedClass:
+class ClassDeclaration:
 
-    def __init__( self, name, maySpanMultipleLines ):
+    def __init__( self, name ):
         self.name = name
-        self.fields = []
-        self.maySpanMultipleLines = maySpanMultipleLines
+        self.lines = []
 
-    def addFieldFromVariable( self, variable ):
-        self.fields.append(variable)
+    def addFieldToLastLine( self, field ):
+        if len(self.lines) == 0:
+            self.lines.append(list())
+        self.lines[-1].append(field)
+
+    def addFieldToNewLine( self, field ):
+        self.lines.append([ field, ])
 
     def __str__(self):
         result = "class " + self.name + "\n"
-        result += "  multiline: " + str(self.maySpanMultipleLines) + "\n"
-        result += "  fields:\n"
-        for field in self.fields:
-            result += "    " + str(field) + "\n"
-        return result[:-1]
+        for line in self.lines:
+            for field in line:
+                result += "  - " + str(field) + "\n"
+        return result
 
 class HeimerObjectModel:
 
     def __init__(self):
         self.lineDelimiter = StringConstants.DEFAULT_SINGLE_LINE_DELIMITER
         self.commandLineOptions = []
-        self.singleLineClasses = []
-        self.multipleLineClasses = []
-        self.variables = []
+        self.classes = []
+        self.body = ClassDeclaration("Body")
 
     def addCommandLineOption( self, flagName, variableName, optionType ):
         self.commandLineOptions.append(CommandLineOption( flagName, variableName, optionType ))
 
-    def addSingleLineClass( self, inputClass ):
-        self.singleLineClasses.append(inputClass)
-
-    def addMultipleLineClass( self, inputClass ):
-        self.multipleLineClasses.append(inputClass)
-
-    def addVariable( self, variable ):
-        self.variables.append(variable)
+    def addClass( self, inputClass ):
+        self.classes.append(inputClass)
 
     def __str__(self):
         result = str([ str(option) for option in self.commandLineOptions ]) + "\n\n"
-        if len(self.singleLineClasses) > 0:
-            result += userDefinedClassesAsString(self.singleLineClasses) + "\n\n"
-        if len(self.multipleLineClasses) > 0:
-            result += userDefinedClassesAsString(self.multipleLineClasses) + "\n\n"
-        for variable in self.variables:
-            result += "- " + str(variable) + "\n"
-        return result[:-1]
+        if len(self.classes) > 0:
+            result += userDefinedClassesAsString(self.classes) + "\n"
+        result += str(self.body)
+        return result
 
 def userDefinedClassesAsString(classes):
     if len(classes) == 0:
@@ -152,18 +137,18 @@ def userDefinedClassesAsString(classes):
         result += "\n" + str(userClass)
     return result[1:]
 
-def makeVariableFromRegexGroups(groups):
-    variable = Variable( groups[0], Type(groups[1]) )
-    variable.instanceRepititionModeString = groups[-2] if groups[-2] else ""
-    variable.shouldSeparateInstancesByAdditionalNewline = groups[-1] == StringConstants.SEPARATE_BY_ADDITIONAL_NEWLINE_MODE
-    return variable
+def makeFieldFromRegexGroups(groups):
+    field = FieldDeclaration( groups[0], groups[1] )
+    field.instanceRepititionModeString = groups[-2] if groups[-2] else ""
+    field.shouldSeparateInstancesByAdditionalNewline = groups[-1] == StringConstants.SEPARATE_BY_ADDITIONAL_NEWLINE_MODE
+    return field
 
 class HeimerFormatFileParser:
 
     def __init__( self, formatFileName ):
         self.tagLineMarkerIntervals = {}
         self.failureMessages = []
-        self.format = HeimerObjectModel()
+        self.objectModel = HeimerObjectModel()
         try:
             heimerFile = open( formatFileName, "r" )
             self.formatInputAsLines = heimerFile.read().split("\n")
@@ -194,7 +179,7 @@ class HeimerFormatFileParser:
             delimiterMatchResults = RegexPatterns.DELIMITER.match(currentStrippedLine)
             if delimiterMatchResults is None:
                 return self.pushFailureMessage( "Expected delimiter declaration.", lineMarker )
-            self.format.lineDelimiter = delimiterMatchResults.group(1)
+            self.objectModel.lineDelimiter = delimiterMatchResults.group(1)
 
     def parseOptionsTag(self):
         if StringConstants.OPTIONS_TAG not in self.tagLineMarkerIntervals:
@@ -207,10 +192,8 @@ class HeimerFormatFileParser:
             optionsMatchResults = RegexPatterns.OPTION.match(currentStrippedLine)
             if optionsMatchResults is None:
                 return self.pushFailureMessage( "Expected command line option.", lineMarker )
-            optionType = Type(optionsMatchResults.group(3))
-            if not optionType.isPrimitive():
-                return self.pushFailureMessage( "Expected primitive type.", lineMarker )
-            self.format.addCommandLineOption( optionsMatchResults.group(1), optionsMatchResults.group(2), optionType )
+            optionType = optionsMatchResults.group(3)
+            self.objectModel.addCommandLineOption( optionsMatchResults.group(1), optionsMatchResults.group(2), optionType )
 
     def parseSingleTag(self):
         if StringConstants.SINGLE_TAG not in self.tagLineMarkerIntervals:
@@ -223,7 +206,7 @@ class HeimerFormatFileParser:
                 continue
             if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
                 return self.pushFailureMessage( "Expected class declaration.", lineMarker )
-            singleLineClass = UserDefinedClass(currentStrippedLine, False)
+            singleLineClass = ClassDeclaration(currentStrippedLine)
             while lineMarker < singleTagEndMarker - 1:
                 lineMarker += 1
                 currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
@@ -236,13 +219,13 @@ class HeimerFormatFileParser:
                 currentStrippedLine += " "
                 fieldMatchResults = RegexPatterns.SINGLE_FIELD.match(currentStrippedLine)
                 while fieldMatchResults:
-                    variable = Variable( fieldMatchResults.group(1), Type(fieldMatchResults.group(2)) )
-                    singleLineClass.addFieldFromVariable(variable)
+                    variable = FieldDeclaration( fieldMatchResults.group(1), fieldMatchResults.group(2) )
+                    singleLineClass.addFieldToLastLine(variable)
                     currentStrippedLine = currentStrippedLine[fieldMatchResults.end():]
                     fieldMatchResults = RegexPatterns.SINGLE_FIELD.match(currentStrippedLine)
                 if currentStrippedLine.strip():
                     self.pushFailureMessage( "Expected field declaration.", lineMarker )
-            self.format.addSingleLineClass(singleLineClass)
+            self.objectModel.addClass(singleLineClass)
 
     def parseMultipleTag(self):
         if StringConstants.MULTIPLE_TAG not in self.tagLineMarkerIntervals:
@@ -255,7 +238,7 @@ class HeimerFormatFileParser:
                 continue
             if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
                 return self.pushFailureMessage( "Expected class declaration.", lineMarker )
-            multipleLineClass = UserDefinedClass(currentStrippedLine, True)
+            multipleLineClass = ClassDeclaration(currentStrippedLine)
             while lineMarker < multipleTagEndMarker - 1:
                 lineMarker += 1
                 currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
@@ -267,8 +250,8 @@ class HeimerFormatFileParser:
                 fieldMatchResults = RegexPatterns.MULTIPLE_FIELD.match(currentStrippedLine)
                 if not fieldMatchResults or len(fieldMatchResults.groups()) not in [ 5, 6 ]:
                     return self.pushFailureMessage( "Expected field declaration.", lineMarker )
-                multipleLineClass.addFieldFromVariable(makeVariableFromRegexGroups(fieldMatchResults.groups()))
-            self.format.addMultipleLineClass(multipleLineClass)
+                multipleLineClass.addFieldToNewLine(makeFieldFromRegexGroups(fieldMatchResults.groups()))
+            self.objectModel.addClass(multipleLineClass)
 
     def parseBodyTag(self):
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
@@ -284,8 +267,8 @@ class HeimerFormatFileParser:
             variableMatchResult = RegexPatterns.BODY_VARIABLE.match(currentStrippedLine)
             if not variableMatchResult:
                 return self.pushFailureMessage( "Expected variable declaration.", lineMarker )
-            previousVariable = makeVariableFromRegexGroups(variableMatchResult.groups())
-            self.format.addVariable(previousVariable)
+            previousVariable = makeFieldFromRegexGroups(variableMatchResult.groups())
+            self.objectModel.body.addFieldToNewLine(previousVariable)
         if previousVariable:
             previousVariable.newlinesAfterLastInstance = 0
 

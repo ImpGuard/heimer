@@ -8,11 +8,13 @@ v verbose bool
 <single>
 Vertex
     x:int y:int z:int
+
 <multiple>
 Triangle
     p1:Vertex
     p2:Vertex
     p3:Vertex
+
 <body>
 triangles:Triangle:+!
 
