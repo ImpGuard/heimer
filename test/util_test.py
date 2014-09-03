@@ -3,54 +3,46 @@ from util import *
 import os
 from nose.tools import *
 
-filename1 = "basic"
-filename2 = "advanced"
+filename = "basic"
 
 def removeFiles():
-    try:
-        os.remove(filename1)
-        os.remove(filename2)
-    except:
-        pass
+    os.remove(filename)
 
 @with_setup(teardown = removeFiles)
 def testBasicHeimerFile():
-    simpleFile = HeimerFile(filename1)
+    simpleFile = HeimerFile(filename)
     simpleFile.write("abc")
     simpleFile.save()
     simpleFile.writeLine("def")
     simpleFile.writeLine("ghijkl")
     simpleFile.save()
 
-    resultFile = open(filename1, "r")
+    resultFile = open( filename, "r" )
     assert_equal( resultFile.readline().strip(), "abcdef" )
     assert_equal( resultFile.readline().strip(), "ghijkl" )
     resultFile.close()
 
 @with_setup(teardown = removeFiles)
-def testVirtualMachine():
-    VM = VirtualMachine()
-    VM.openFile(filename1)
-    VM.writeLine("def func():")
-    VM.indent()
-    VM.openFile(filename2)
-    VM.writeLine("def func2():")
-    VM.indent()
-    VM.writeLine("print 'hi'")
-    VM.dedent()
-    VM.switchTo(filename1)
-    VM.writeLine("pass")
-    VM.dedent()
-    VM.save()
+def testHeimerFileComments():
+    simpleFile = HeimerFile(filename)
+    simpleFile.writeLine("abc")
+    simpleFile.comment("The above is an abc.")
+    simpleFile.save()
 
-    resultFile = open(filename1, "r")
-    assert_equal( resultFile.readline().strip(), "def func():" )
-    assert_equal( resultFile.readline().rstrip(), "    pass" )
+    resultFile = open( filename, "r" )
+    assert_equal( resultFile.readline().strip(), "abc" )
+    assert_equal( resultFile.readline().strip(), simpleFile.commentString + " The above is an abc." )
     resultFile.close()
 
-    resultFile = open(filename2, "r")
-    assert_equal( resultFile.readline().strip(), "def func2():")
-    assert_equal( resultFile.readline().rstrip(), "    print 'hi'")
-    resultFile.close()
+@with_setup(teardown = removeFiles)
+def testHeimerImport():
+    simpleFile = HeimerFile(filename)
+    simpleFile.writeLine("abc")
+    simpleFile.writeImportLine("import a simple library")
+    simpleFile.save()
 
+    resultFile = open( filename, "r" )
+    assert_equal( resultFile.readline().strip(), "import a simple library" )
+    assert_equal( resultFile.readline().strip(), "abc" )
+    resultFile.close()
 
