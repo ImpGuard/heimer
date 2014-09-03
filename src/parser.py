@@ -140,6 +140,8 @@ class HeimerFormatFileParser:
             return self.pushFailureMessage("Could not find file " + formatFileName + ".")
             self.formatInputAsLines = []
         self.computeTagIntervals()
+        if len(self.failureMessages) > 0:
+            return
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
             return self.pushFailureMessage("Input file requires a body tag.")
         self.parseAllTags()
@@ -189,6 +191,7 @@ class HeimerFormatFileParser:
             if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
                 return self.pushFailureMessage( "Expected class declaration.", lineMarker )
             classDecl = ClassDeclaration(currentStrippedLine)
+            classDeclLineMarker = lineMarker
             while lineMarker < singleTagEndMarker - 1:
                 lineMarker += 1
                 currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
@@ -199,7 +202,7 @@ class HeimerFormatFileParser:
                     break
                 fields = fieldDeclarationsFromLine(currentStrippedLine)
                 if len(fields) == 0:
-                    return self.pushFailureMessage( "Expected field declaration for \"%s\"" % (classDecl.name,), lineMarker )
+                    return self.pushFailureMessage( "Expected field declaration for \"%s\"" % (classDecl.name,), classDeclLineMarker, lineMarker )
                 classDecl.addFieldsAsLine(fields)
             self.objectModel.addClass(classDecl)
 
@@ -224,14 +227,13 @@ class HeimerFormatFileParser:
             previousVariable.newlinesAfterLastInstance = 0
 
     def printFailures(self):
-        print "========== %s FAILURES ==========" % (len(self.failureMessages))
         for failureMessage in self.failureMessages:
             print failureMessage, "\n"
 
-    def pushFailureMessage( self, message, lineMarker=None ):
+    def pushFailureMessage( self, message, *lineMarkers ):
         failureMessage = "Error: " + message
-        if lineMarker is not None:
-            failureMessage += "\n  at line " + str(lineMarker + 1) +  ": \"" + self.formatInputAsLines[lineMarker] + "\""
+        for lineMarker in lineMarkers:
+            failureMessage += "\n    at line " + str(lineMarker + 1) +  ":\t\"" + self.formatInputAsLines[lineMarker] + "\""
         self.failureMessages.append(failureMessage)
 
     def nextTagLocationFromLineMarker( self, marker ):
@@ -257,8 +259,9 @@ class HeimerFormatFileParser:
         if not lineStartsValidTag(self.formatInputAsLines[lineMarkerBegin]):
             return self.pushFailureMessage( "Expected tag declaration.", lineMarkerBegin )
         while lineMarkerBegin < len(self.formatInputAsLines):
-            if self.formatInputAsLines[lineMarkerBegin] in self.tagLineMarkerIntervals:
-                return self.pushFailureMessage( "Duplicate tag name.", lineMarkerBegin )
+            tagName = self.formatInputAsLines[lineMarkerBegin]
+            if tagName in self.tagLineMarkerIntervals:
+                return self.pushFailureMessage( "Duplicate tag name.", self.tagLineMarkerIntervals[tagName][0], lineMarkerBegin )
             lineMarkerEnd = self.nextTagLocationFromLineMarker(lineMarkerBegin + 1)
             self.tagLineMarkerIntervals[self.formatInputAsLines[lineMarkerBegin]] = ( lineMarkerBegin, lineMarkerEnd )
             lineMarkerBegin = lineMarkerEnd
