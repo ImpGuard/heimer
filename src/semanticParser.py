@@ -1,9 +1,9 @@
-from parse import StringConstants
+from syntacticParser import StringConstants
 
 class HeimerFormat:
     def __init__( self, objectModel ):
         self._model = objectModel
-        # Make sure the user defined classes are of the correct format, else throw error.
+        # Make sure the user defined classes are of the correct format, else raise error.
         self._userClasses = dict()
         self._userClassNames = list()
         for c in self._model.classes:
@@ -12,7 +12,7 @@ class HeimerFormat:
             self._userClasses[c.name] = c
             self._userClassNames.append(c.name)
         # Make sure the body is of the correct format.
-        _assertValidClass( self._model.body., self._userClasses )
+        _assertValidClass( self._model.body, self._userClasses )
         self._body = HeimerFormatObject( self._model.body, self._userClasses )
 
     def lineDelimiter(self):
@@ -57,7 +57,7 @@ class HeimerFormatObject:
                     self._variables[var.name] = obj
                     l.append(obj)
                     # Make sure if the variable has a instance repetition mode, it is either an
-                    # integer, a special symbol, or an integer variable already defined in this 
+                    # integer, a special symbol, or an integer variable already defined in this
                     # particular user class.
                     mode = obj.instanceRepetitionMode
                     if ( mode and type(mode) != int and \
@@ -65,7 +65,7 @@ class HeimerFormatObject:
                         mode != StringConstants.LINE_ZERO_OR_MORE and \
                         ( mode not in self._variables or \
                         not self._variables[mode].isInteger() ) ):
-                        throw ValueError("Unknown repetition mode '%s': it must be either an integer, \
+                        raise ValueError("Unknown repetition mode '%s': it must be either an integer, \
                             the symbol '+' or '*', or an int variable already defined in class." % mode)
                 self._lines.append(l)
 
@@ -135,10 +135,10 @@ def _listType(typeName):
 
 def _assertValidName( name, usedNames ):
     if name in usedNames:
-        throw ValueError("Name conflict: User defined class/variable must have unique name, the name \
+        raise ValueError("Name conflict: User defined class/variable must have unique name, the name \
             '%s' is used more than once." % name)
     if _isPrimitive(name):
-        throw ValueError("Name conflict: '%s' is a primitive type and cannot be used as the name \
+        raise ValueError("Name conflict: '%s' is a primitive type and cannot be used as the name \
             of user defined classes/variables." % name)
 
 def _assertValidType( typeName, userClasses ):
@@ -146,19 +146,19 @@ def _assertValidType( typeName, userClasses ):
     if typeName in userClasses:
         return
     # Valid type if it's a primitive
-    else if _isPrimitive(typeName):
+    elif _isPrimitive(typeName):
         return
     # Invalid type if it's a list but the list type is not a non-list primitive
-    else if ( typeName.find(StringConstants.LIST_TYPE) == 0 and \
+    elif ( typeName.find(StringConstants.LIST_TYPE) == 0 and \
             typeName[len(StringConstants.LIST_TYPE)] == "(" and \
             typeName[-1] == ")" ):
         # get the list type and remove whitespaces in the front and back
         listType = typeName[ len(StringConstants.LIST_TYPE) : len(typeName) - 1 ].strip()
         if not _isPrimitive(listType) or _isList(listType):
-            throw ValueError("The type of a list can only be a non-list primitive type.")
+            raise ValueError("The type of a list can only be a non-list primitive type.")
         return
     # Else invalid type.
-    throw ValueError("Unknown variable type '%s', it should either be a primitive type or \
+    raise ValueError("Unknown variable type '%s', it should either be a primitive type or \
         a user defined class." % typeName)
 
 def _assertValidClass( c, userClasses ):
@@ -168,15 +168,15 @@ def _assertValidClass( c, userClasses ):
             if _isPrimitive(field.typeName):
                 # a list can only be the last field on a line
                 if _isList(field.typeName) and ( index + 1 ) >= len(line):
-                    throw ValueError("Format error in user defined class '%s': list can only be the \
+                    raise ValueError("Format error in user defined class '%s': list can only be the \
                         last field on a line." % c.name)
             else:
                 if field.typeName not in userClasses:
-                    throw ValueError("Format error in user defined class '%s': unknown field type '%s', \
-                        all types must be either primitive type or a already defined user class." 
+                    raise ValueError("Format error in user defined class '%s': unknown field type '%s', \
+                        all types must be either primitive type or a already defined user class."
                         % ( c.name, field.typeName ))
                 # There is more than one field on this line
                 if len(line) > 1:
-                    throw ValueError("Format error in user defined class '%s': unexpected field \
+                    raise ValueError("Format error in user defined class '%s': unexpected field \
                         type '%s', there can be exactly one field with user defined class as type in \
                         each line." % ( c.name, field.tpyName))
