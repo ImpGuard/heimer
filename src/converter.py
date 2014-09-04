@@ -1,4 +1,4 @@
-from syntacticParser import StringConstants
+from parser import StringConstants
 
 class HeimerFormat:
     def __init__( self, objectModel ):
