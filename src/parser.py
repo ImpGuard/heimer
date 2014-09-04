@@ -132,7 +132,7 @@ class HeimerFormatFileParser:
         self.objectModel = HeimerObjectModel()
         try:
             heimerFile = open( formatFileName, "r" )
-            self.formatInputAsLines = heimerFile.read().split("\n")
+            self.formatInputAsLines = [line.strip() for line in heimerFile.readlines()]
             heimerFile.close()
         except IOError:
             return self.pushFailureMessage("Could not find file " + formatFileName + ".")
@@ -155,7 +155,7 @@ class HeimerFormatFileParser:
             return
         headTagBeginMarker, headTagEndMarker = self.tagLineMarkerIntervals[StringConstants.HEAD_TAG]
         for lineMarker in xrange( headTagBeginMarker + 1, headTagEndMarker ):
-            currentStrippedLine = self.formatInputAsLines[lineMarker].strip()
+            currentStrippedLine = self.formatInputAsLines[lineMarker]
             if not currentStrippedLine:
                 continue
             delimiterMatchResults = RegexPatterns.DELIMITER.match(currentStrippedLine)
