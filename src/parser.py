@@ -20,7 +20,7 @@ class StringConstants:
 class RegexPatterns:
     """ Patterns used for parsing. Except when parsing options, names are considered simple words with underscores. """
     DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"\s*(#.*)?$")
-    OPTION = re.compile(r"^([\w]+)\s+([\w]+)\s+([\w]+)$"
+    OPTION = re.compile(r"^([\w]+)\s+([\w]+)\s+([\w]+)$")
     CLASS_NAME = re.compile(r"^[\w_]+$")
     FIELD = re.compile(r"^([\w_]+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*([\w_]+)\s*\)|[\w_]+)(:([\w_]+|\+|\*)(\!)?)?\s*")
 
