@@ -1,3 +1,5 @@
+from parse import StringConstants
+
 class HeimerFormat:
     def __init__( self, objectModel ):
         self._model = objectModel
