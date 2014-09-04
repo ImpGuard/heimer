@@ -18,12 +18,11 @@ class StringConstants:
     SEPARATE_BY_ADDITIONAL_NEWLINE_MODE = "!"
 
 class RegexPatterns:
-
-    # FIXME: Handle underscores in variable names.
+    """ Patterns used for parsing. Except when parsing options, names are considered simple words with underscores. """
     DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"$")
-    OPTION = re.compile(r"^(\w+)\s+(\w+)\s+(\w+)$")
-    CLASS_NAME = re.compile(r"^\w+$")
-    FIELD = re.compile(r"^(\w+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*(\w+)\s*\)|\w+)(:(\w+|\+|\*)(\!)?)?\s*")
+    OPTION = re.compile(r"^([\w]+)\s+([\w]+)\s+([\w]+)$"
+    CLASS_NAME = re.compile(r"^[\w_]+$")
+    FIELD = re.compile(r"^([\w_]+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*([\w_]+)\s*\)|[\w_]+)(:([\w_]+|\+|\*)(\!)?)?\s*")
 
 def lineStartsValidTag(line):
     return line == StringConstants.HEAD_TAG or \
