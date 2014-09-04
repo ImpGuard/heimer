@@ -19,7 +19,7 @@ class StringConstants:
 
 class RegexPatterns:
     """ Patterns used for parsing. Except when parsing options, names are considered simple words with underscores. """
-    DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"$")
+    DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"\s*(#.*)?$")
     OPTION = re.compile(r"^([\w]+)\s+([\w]+)\s+([\w]+)$"
     CLASS_NAME = re.compile(r"^[\w_]+$")
     FIELD = re.compile(r"^([\w_]+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*([\w_]+)\s*\)|[\w_]+)(:([\w_]+|\+|\*)(\!)?)?\s*")
@@ -31,7 +31,6 @@ def lineStartsValidTag(line):
         line == StringConstants.BODY_TAG
 
 def stripCommentsAndWhitespaceFromLine(line):
-    # FIXME: Allow using "#" as a separator in <head> tag.
     firstInlineCommentIndex = line.find(StringConstants.INLINE_COMMENT)
     if firstInlineCommentIndex == -1:
         return line.strip()
@@ -156,7 +155,7 @@ class HeimerFormatFileParser:
             return
         headTagBeginMarker, headTagEndMarker = self.tagLineMarkerIntervals[StringConstants.HEAD_TAG]
         for lineMarker in xrange( headTagBeginMarker + 1, headTagEndMarker ):
-            currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
+            currentStrippedLine = self.formatInputAsLines[lineMarker].strip()
             if not currentStrippedLine:
                 continue
             delimiterMatchResults = RegexPatterns.DELIMITER.match(currentStrippedLine)
