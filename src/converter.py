@@ -1,4 +1,4 @@
-from parser import StringConstants
+from parser import StringConstants, FieldDeclaration
 
 class HeimerFormat:
     def __init__( self, objectModel ):
@@ -13,13 +13,17 @@ class HeimerFormat:
             self._userClassNames.append(c.name)
         # Make sure the body is of the correct format.
         _assertValidClass( self._model.body, self._userClasses )
-        self._body = HeimerFormatObject( self._model.body, self._userClasses )
+        # HACK HACK since HeimerFormatObject takes in a FieldDeclaration but body is a ClassDeclaration
+        f = FieldDeclaration( self._model.body.name, self._model.body.name )
+        userClasses = self._userClasses.copy()
+        userClasses[self._model.body.name] = self._model.body
+        self._body = HeimerFormatObject( f, userClasses )
 
     def lineDelimiter(self):
         return self._model.lineDelimiter
 
-    def commandOptions(self):
-        return self._model.commandOptions
+    def commandLineOptions(self):
+        return self._model.commandLineOptions
 
     def classes(self):
         """ Return a list of tuples, where the tuple contains the class name and a dictionary with
@@ -42,8 +46,8 @@ class HeimerFormatObject:
     def __init__( self, field, userClasses ):
         self._field = field
         self._userClasses = userClasses
-        _assertValidType(field.typeName)
-        self._class = None if self.isPrimitive else userClasses[field.typeName]
+        _assertValidType( field.typeName, userClasses )
+        self._class = None if self.isPrimitive() else userClasses[field.typeName]
         self._lines = []
         self._variables = dict()
         # If it is a user defined class, recursively construct HeimerFormatObject from the variables
@@ -59,7 +63,7 @@ class HeimerFormatObject:
                     # Make sure if the variable has a instance repetition mode, it is either an
                     # integer, a special symbol, or an integer variable already defined in this
                     # particular user class.
-                    mode = obj.instanceRepetitionMode
+                    mode = obj.instanceRepetitionMode()
                     if ( mode and type(mode) != int and \
                         mode != StringConstants.LINE_ONE_OR_MORE and \
                         mode != StringConstants.LINE_ZERO_OR_MORE and \
@@ -69,11 +73,17 @@ class HeimerFormatObject:
                             the symbol '+' or '*', or an int variable already defined in class." % mode)
                 self._lines.append(l)
 
+    def name(self):
+        return self._field.name
+
+    def typeName(self):
+        return self._field.typeName
+
     def lines(self):
         return self._lines
 
-    def newLinesAfterLastInstance(self):
-        return self._field.newLinesAfterLastInstance
+    def newlinesAfterLastInstance(self):
+        return self._field.newlinesAfterLastInstance
 
     def instanceRepetitionMode(self):
         mode = self._field.instanceRepetitionModeString
@@ -109,6 +119,14 @@ class HeimerFormatObject:
         else:
             return None
 
+    def __str__(self):
+        str = ""
+        for line in self.lines():
+            for field in line:
+                str += field.name() + ":" + field.typeName() + "  "
+            str += "\n"
+        return str
+
 
 def _isPrimitive(typeName):
     return typeName == StringConstants.INTEGER_TYPE or typeName == StringConstants.FLOAT_TYPE or \
@@ -117,10 +135,12 @@ def _isPrimitive(typeName):
 
 def _isList(typeName):
     """ List is of the form 'list(listType)' where listType is a non-list primitive. """
+    if len(typeName) <= 4:
+        return False
     if typeName.find(StringConstants.LIST_TYPE) == 0 and \
         typeName[len(StringConstants.LIST_TYPE)] == "(" and \
         typeName[-1] == ")":
-        listType = typeName[ len(StringConstants.LIST_TYPE) : len(typeName) - 1 ].strip()
+        listType = typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
         if _isPrimitive(listType) and not _isList(listType):
             return True
         else:
@@ -129,7 +149,7 @@ def _isList(typeName):
 
 def _listType(typeName):
     if _isList(typeName):
-        return typeName[ len(StringConstants.LIST_TYPE) : len(typeName) - 1 ].strip()
+        return typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
     else:
         return None
 
@@ -153,7 +173,7 @@ def _assertValidType( typeName, userClasses ):
             typeName[len(StringConstants.LIST_TYPE)] == "(" and \
             typeName[-1] == ")" ):
         # get the list type and remove whitespaces in the front and back
-        listType = typeName[ len(StringConstants.LIST_TYPE) : len(typeName) - 1 ].strip()
+        listType = typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
         if not _isPrimitive(listType) or _isList(listType):
             raise ValueError("The type of a list can only be a non-list primitive type.")
         return
@@ -167,7 +187,7 @@ def _assertValidClass( c, userClasses ):
         for index, field in enumerate(line):
             if _isPrimitive(field.typeName):
                 # a list can only be the last field on a line
-                if _isList(field.typeName) and ( index + 1 ) >= len(line):
+                if _isList(field.typeName) and ( index + 1 ) < len(line):
                     raise ValueError("Format error in user defined class '%s': list can only be the \
                         last field on a line." % c.name)
             else:
@@ -180,3 +200,8 @@ def _assertValidClass( c, userClasses ):
                     raise ValueError("Format error in user defined class '%s': unexpected field \
                         type '%s', there can be exactly one field with user defined class as type in \
                         each line." % ( c.name, field.tpyName))
+
+def test(fileName="examples/graph_example"):
+    from parser import HeimerFormatFileParser
+    p = HeimerFormatFileParser(fileName)
+    return HeimerFormat(p.objectModel)
