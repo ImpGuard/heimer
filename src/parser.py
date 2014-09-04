@@ -51,12 +51,12 @@ class FieldDeclaration:
     def __init__( self, name, typeName ):
         self.name = name
         self.typeName = typeName
-        self.instanceRepititionModeString = ""
+        self.instanceRepetitionModeString = ""
         self.shouldSeparateInstancesByAdditionalNewline = False
         self.newlinesAfterLastInstance = 0
 
     def __str__(self):
-        return str(( self.name, self.typeName, self.instanceRepititionModeString,
+        return str(( self.name, self.typeName, self.instanceRepetitionModeString,
             self.shouldSeparateInstancesByAdditionalNewline, self.newlinesAfterLastInstance ))
 
 class ClassDeclaration:
@@ -114,7 +114,7 @@ def fieldDeclarationsFromLine(line):
     while fieldMatchResult and len(fieldMatchResult.groups()) in [ 5, 6 ]:
         regexGroups = fieldMatchResult.groups()
         field = FieldDeclaration( regexGroups[0], regexGroups[1] )
-        field.instanceRepititionModeString = regexGroups[-2] if regexGroups[-2] else ""
+        field.instanceRepetitionModeString = regexGroups[-2] if regexGroups[-2] else ""
         field.shouldSeparateInstancesByAdditionalNewline = regexGroups[-1] == StringConstants.SEPARATE_BY_ADDITIONAL_NEWLINE_MODE
         fields.append(field)
         line = line[fieldMatchResult.end():]
