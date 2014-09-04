@@ -96,11 +96,11 @@ class HeimerObjectModel:
         if len(self.commandLineOptions):
             result += str([ str(option) for option in self.commandLineOptions ]) + "\n"
         if len(self.classes) > 0:
-            result += userDefinedClassesAsString(self.classes) + "\n"
+            result += classDeclarationsAsString(self.classes) + "\n"
         result += str(self.body)
         return result
 
-def userDefinedClassesAsString(classes):
+def classDeclarationsAsString(classes):
     if len(classes) == 0:
         return ""
     result = ""
