@@ -3,9 +3,10 @@ from parser import StringConstants, FieldDeclaration
 class HeimerFormat:
     def __init__( self, objectModel ):
         self._model = objectModel
-        # Make sure the user defined classes are of the correct format, else raise error.
         self._userClasses = dict()
+        # The class names are stored twice because we want to perserve the ordering of the classes
         self._userClassNames = list()
+        # Make sure the user defined classes are of the correct format, else raise error.
         for c in self._model.classes:
             _assertValidName( c.name, self._userClasses )
             _assertValidClass( c, self._userClasses )
