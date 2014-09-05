@@ -43,9 +43,10 @@ class HeimerFormat:
 
 
 class HeimerFormatObject:
-    def __init__( self, field, userClasses ):
+    def __init__( self, field, userClasses, parent=None ):
         self._field = field
         self._userClasses = userClasses
+        self._parent = parent
         _assertValidType( field.typeName, userClasses )
         self._class = None if self.isPrimitive() else userClasses[field.typeName]
         self._lines = []
@@ -56,8 +57,8 @@ class HeimerFormatObject:
             for line in self._class.lines:
                 l = []
                 for var in line:
-                    _assertValidName( var.name, self._variables )
-                    obj = HeimerFormatObject( var, userClasses )
+                    _assertValidName( var.name, self._variables.keys() + userClasses.keys() )
+                    obj = HeimerFormatObject( var, userClasses, parent=self )
                     self._variables[var.name] = obj
                     l.append(obj)
                     # Make sure if the variable has a instance repetition mode, it is either an
@@ -78,6 +79,10 @@ class HeimerFormatObject:
 
     def typeName(self):
         return self._field.typeName
+
+    def parent(self):
+        """ The parent of this object """
+        return self._parent
 
     def lines(self):
         return self._lines
@@ -154,12 +159,13 @@ def _listType(typeName):
         return None
 
 def _assertValidName( name, usedNames ):
+    """ Verify a name isn't already used by another user defined class or field. """
     if name in usedNames:
-        raise ValueError("Name conflict: User defined class/variable must have unique name, the name \
+        raise ValueError("Name conflict: User defined class/field must have unique name, the name \
             '%s' is used more than once." % name)
     if _isPrimitive(name):
         raise ValueError("Name conflict: '%s' is a primitive type and cannot be used as the name \
-            of user defined classes/variables." % name)
+            of user defined classes/fields." % name)
 
 def _assertValidType( typeName, userClasses ):
     # Valid type if it's a user defined class
@@ -178,7 +184,7 @@ def _assertValidType( typeName, userClasses ):
             raise ValueError("The type of a list can only be a non-list primitive type.")
         return
     # Else invalid type.
-    raise ValueError("Unknown variable type '%s', it should either be a primitive type or \
+    raise ValueError("Unknown field type '%s', it should either be a primitive type or \
         a user defined class." % typeName)
 
 def _assertValidClass( c, userClasses ):
