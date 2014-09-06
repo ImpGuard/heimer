@@ -4,5 +4,5 @@ check:
 	@cd src; nosetests ../test
 
 clean:
-	@rm -rf test/*.pyc src/*.pyc
+	@rm -rf test/*.pyc src/*.pyc out
 

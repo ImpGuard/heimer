@@ -50,7 +50,7 @@ Ex.
     if ("Answer to the universe" == 42): # Answers the most important question of all
         print "Yes"
 - Special comments should be used for special cases:
-    * "FIX ME" for code that does not work at the moment "HACK HACK" for code
+    * "FIX ME" for code that does not work at the moment "HACKHACK" for code
     * that isn't pristine and should be rewritten if there is time
 
 Doc Strings
