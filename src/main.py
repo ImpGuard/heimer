@@ -1,8 +1,8 @@
 from parser import HeimerFormatFileParser
 from converter import HeimerFormat
-from pygen import PythonGenerator
+# from pygen import PythonGenerator
 from javagen import JavaGenerator
-from cgen import CGenerator
+# from cgen import CGenerator
 
 import sys
 from optparse import OptionParser
@@ -12,10 +12,11 @@ DEFAULT_LANGUAGE = "python"
 
 if __name__ == "__main__":
     # Option parser
-    optParser = OptionParser()
+    optParser = OptionParser(usage = USAGE)
     optParser.add_option( "-l", "--lang", action = "store", dest = "language",
-            help = "specifies the output parser language. Defaults to using the extension on the output file name or Python." )
-    optParser.add_option( "-o", "--output", action = "store", dest = "outputName", default = "out"
+            help = "specifies the output parser language. Defaults to using the extension on the output file name or Python. \n"
+                   "Accepts 'python', 'java', or 'c++'." )
+    optParser.add_option( "-o", "--output", action = "store", dest = "outputName", default = "out",
             help = "specifies the output file name" )
     (options, args) = optParser.parse_args()
 
@@ -39,13 +40,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Parser format file into a object model
-    parser = HeimerFormatFileParser( self, args[0] )
+    parser = HeimerFormatFileParser(args[0])
     if len(parser.failureMessages) > 0:
         parser.printFailures()
         sys.exit(1)
 
     # Generate a format object from the object model
-    formatObject = HeimerFormatObject(parser.objectModel)
+    formatObject = HeimerFormat(parser.objectModel)
 
     # Depending on output language, call the associated code generator
     generator = None
@@ -55,5 +56,8 @@ if __name__ == "__main__":
         generator = JavaGenerator(formatObject)
     elif options.language == "c++":
         generator = CGenerator(formatObject)
+    else:
+        optParser.print_help()
+        sys.exit(1)
 
     generator.codeGen(options.outputName)
