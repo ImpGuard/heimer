@@ -3,48 +3,48 @@ from util import HeimerFile
 
 class CodeGenerator:
 
-    def __init__( self, format ):
+    def __init__( self, filename, format ):
+        self.output = HeimerFile(filename)
         self.format = format
         self.body = format.body()
 
-    def generateFileHeader( self, outputFile ):
+    def generateFileHeader(self):
         """ For generating the file header, such as the import statements. """
         raise NotImplementedError()
 
-    def generateClasses( self, outputFile ):
+    def generateClasses(self):
         """ For generating code segment that defines all the data structures needed by the parser. """
         for className, fieldNamesAndTypes in self._format.classes():
-            generateClass( outputFile, className, fieldNamesAndTypes )
+            generateClass( className, fieldNamesAndTypes )
 
-    def generateOptionParserFunction( self, outputFile ):
+    def generateOptionParserFunction(self):
         """ For generating the function to parse command line options. """
         raise NotImplementedError()
 
-    def generateInputParserFunction( self, outputFile ):
+    def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
         raise NotImplementedError()
 
-    def generateRunFunction( self, outputFile ):
+    def generateRunFunction(self):
         """ For generating the function that will be called by the user. """
         raise NotImplementedError()
 
-    def generateMain( self, outputFile ):
+    def generateMain(self):
         """ For generating the empty main method that the user can fill in. """
         raise NotImplementedError()
 
-    def generateClass( self, outputFile, className, fieldNamesAndTypes ):
+    def generateClass( self, className, fieldNamesAndTypes ):
         """ Helper function for generating the code segement defining a class (or the corresponding
-        data structure). The second argument is the class name and the third argument is a dictionary
+        data structure). The first argument is the class name and the second argument is a dictionary
         containing key-value pairs of the form (field name, field type), both as strings. """
         raise NotImplementedError()
 
-    def codeGen( self, filename ):
+    def codeGen(self):
         """ This method is called to generate and write the parser to the specified file. """
-        outputFile = HeimerFile(filename)
-        self.generateFileHeader(outputFile)
-        self.generateClasses(outputFile)
-        self.generateOptionParserFunction(outputFile)
-        self.generateInputParserFunction(outputFile)
-        self.generateMain(outputFile)
-        outputFile.save()
+        self.generateFileHeader()
+        self.generateClasses()
+        self.generateOptionParserFunction()
+        self.generateInputParserFunction()
+        self.generateMain()
+        self.output.save()
 

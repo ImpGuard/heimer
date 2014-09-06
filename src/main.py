@@ -51,13 +51,13 @@ if __name__ == "__main__":
     # Depending on output language, call the associated code generator
     generator = None
     if options.language == "python":
-        generator = PythonGenerator(formatObject)
+        generator = PythonGenerator(options.outputName, formatObject)
     elif options.language == "java":
-        generator = JavaGenerator(formatObject)
+        generator = JavaGenerator(options.outputName, formatObject)
     elif options.language == "c++":
-        generator = CGenerator(formatObject)
+        generator = CGenerator(options.outputName, formatObject)
     else:
         optParser.print_help()
         sys.exit(1)
 
-    generator.codeGen(options.outputName)
+    generator.codeGen()
