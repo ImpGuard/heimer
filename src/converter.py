@@ -12,13 +12,7 @@ class HeimerFormat:
             _assertValidClass( c, self._userClasses )
             self._userClasses[c.name] = c
             self._userClassNames.append(c.name)
-        # Make sure the body is of the correct format.
-        _assertValidClass( self._model.body, self._userClasses )
-        # HACKHACK since HeimerFormatObject takes in a FieldDeclaration but body is a ClassDeclaration
-        f = FieldDeclaration( self._model.body.name, self._model.body.name )
-        userClasses = self._userClasses.copy()
-        userClasses[self._model.body.name] = self._model.body
-        self._body = HeimerFormatObject( f, userClasses )
+        self._body = FormatField( self._model.body, self._userClasses )
 
     def lineDelimiter(self):
         return self._model.lineDelimiter
@@ -43,7 +37,7 @@ class HeimerFormat:
         return self._body
 
 
-class HeimerFormatObject:
+class FormatField:
     def __init__( self, field, userClasses, parent=None ):
         self._field = field
         self._userClasses = userClasses
@@ -52,20 +46,20 @@ class HeimerFormatObject:
         self._class = None if self.isPrimitive() else userClasses[field.typeName]
         self._lines = []
         self._variables = dict()
-        # If it is a user defined class, recursively construct HeimerFormatObject from the variables
+        # If it is a user defined class, recursively construct FormatField from the variables
         # contained in the class.
         if self._class:
             for line in self._class.lines:
-                l = []
+                fields = []
                 for var in line:
                     _assertValidName( var.name, self._variables.keys() + userClasses.keys() )
-                    obj = HeimerFormatObject( var, userClasses, parent=self )
+                    obj = FormatField( var, userClasses, parent=self )
                     self._variables[var.name] = obj
-                    l.append(obj)
+                    fields.append(obj)
                     # Make sure if the variable has a instance repetition mode, it is either an
                     # integer, a special symbol, or an integer variable already defined in this
                     # particular user class.
-                    mode = obj.instanceRepetitionMode()
+                    mode = obj.instanceRepetitionModeString()
                     if ( mode and type(mode) != int and \
                         mode != StringConstants.LINE_ONE_OR_MORE and \
                         mode != StringConstants.LINE_ZERO_OR_MORE and \
@@ -73,7 +67,7 @@ class HeimerFormatObject:
                         not self._variables[mode].isInteger() ) ):
                         raise ValueError("Unknown repetition mode '%s': it must be either an integer, \
                             the symbol '+' or '*', or an int variable already defined in class." % mode)
-                self._lines.append(l)
+                self._lines.append(FormatLine( fields, self ))
 
     def name(self):
         return self._field.name
@@ -86,12 +80,11 @@ class HeimerFormatObject:
         return self._parent
 
     def lines(self):
+        """ Return a list of FormatLine objects, each representing a line in this field.
+        Empty line denotes a line without any field. """
         return self._lines
 
-    def newlinesAfterLastInstance(self):
-        return self._field.newlinesAfterLastInstance
-
-    def instanceRepetitionMode(self):
+    def instanceRepetitionModeString(self):
         mode = self._field.instanceRepetitionModeString
         try:
             return int(mode)
@@ -105,16 +98,16 @@ class HeimerFormatObject:
         return _isPrimitive(self._field.typeName)
 
     def isInteger(self):
-        return self._field.typeName == StringConstants.INTEGER_TYPE
+        return _isInteger(self._field.typeName)
 
     def isFloat(self):
-        return self._field.typeName == StringConstants.FLOAT_TYPE
+        return _isFloat(self._field.typeName)
 
     def isString(self):
-        return self._field.typeName == StringConstants.STRING_TYPE
+        return _isString(self._field.typeName)
 
     def isBool(self):
-        return self._field.typeName == StringConstants.BOOL_TYPE
+        return _isBool(self._field.typeName)
 
     def isList(self):
         return _isList(self._field.typeName)
@@ -126,18 +119,99 @@ class HeimerFormatObject:
             return None
 
     def __str__(self):
-        str = ""
-        for line in self.lines():
-            for field in line:
-                str += field.name() + ":" + field.typeName() + "  "
-            str += "\n"
-        return str
+        s = ""
+        if self.isPrimitive():
+            s += "%s:%s" % ( self.name(), self.typeName() )
+            if self.instanceRepetitionModeString():
+                s += ":%s" % self.instanceRepetitionModeString()
+                if self.shouldSeparateInstancesByAdditionalNewline():
+                    s += "!"
+        else:
+            for index, line in enumerate(self.lines()):
+                s += str(line)
+                if index < len(self.lines()) - 1:
+                    s += "\n"
+        return s
+
+class FormatLine:
+    """ Representing a line in a class declaration or body of the format file.
+    May contains zero or more fields. """
+    def __init__( self, fields, container ):
+        self._fields = fields
+        # container is the FormatField object representing the class field that contains this line
+        self._container = container
+        self._currentIndex = 0
+        # Repetition string only makes sense when a line has exactly one field
+        self._repetitionString = fields[0].instanceRepetitionModeString() if len(fields) == 1 else ""
+        self._isSplitByNewline = fields[0].shouldSeparateInstancesByAdditionalNewline() if \
+            len(fields) == 1 else "" if len(fields) == 1 else ""
+
+    def container(self):
+        return self._container
+
+    def isEmpty(self):
+        return len(self._fields) == 0
+
+    def repetitionString(self):
+        return self._repetitionString
+
+    def isZeroOrMoreRepetition(self):
+        return self._repetitionString == StringConstants.LINE_ZERO_OR_MORE
+
+    def isONEOrMoreRepetition(self):
+        return self._repetitionString == StringConstants.LINE_ONE_OR_MORE
+
+    def isIntegerRepetition(self):
+        try:
+            int(self._repetitionString)
+            return True
+        except ValueError as e:
+            # Failed to cast to int, it's not int
+            return False
+
+    def isVariableRepetition(self):
+        return ( not self.isZeroOrMoreRepetition() and
+            not self.isONEOrMoreRepetition() and
+            not self.isIntegerRepetition() )
+
+    def isSplitByNewline(self):
+        return self._isSplitByNewline
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self._currentIndex < len(self._fields):
+            self._currentIndex += 1
+            return self._fields[self._currentIndex - 1]
+        else:
+            # Reset the counter so we can use this in more than one for loop
+            self._currentIndex = 0
+            raise StopIteration
+
+    def __str__(self):
+        s = ""
+        for f in self:
+            s += str(f) + " "
+        return s
 
 
 def _isPrimitive(typeName):
     return typeName == StringConstants.INTEGER_TYPE or typeName == StringConstants.FLOAT_TYPE or \
         typeName == StringConstants.BOOL_TYPE or typeName == StringConstants.STRING_TYPE or \
         _isList(typeName)
+
+def _isInteger(typeName):
+    return typeName == StringConstants.INTEGER_TYPE
+
+def _isFloat(typeName):
+    return typeName == StringConstants.FLOAT_TYPE
+
+def _isString(typeName):
+    return typeName == StringConstants.STRING_TYPE
+
+def _isBool(typeName):
+    return typeName == StringConstants.BOOL_TYPE
 
 def _isList(typeName):
     """ List is of the form 'list(listType)' where listType is a non-list primitive. """
