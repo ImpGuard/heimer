@@ -14,7 +14,7 @@ class HeimerFormat:
             self._userClassNames.append(c.name)
         # Make sure the body is of the correct format.
         _assertValidClass( self._model.body, self._userClasses )
-        # HACK HACK since HeimerFormatObject takes in a FieldDeclaration but body is a ClassDeclaration
+        # HACKHACK since HeimerFormatObject takes in a FieldDeclaration but body is a ClassDeclaration
         f = FieldDeclaration( self._model.body.name, self._model.body.name )
         userClasses = self._userClasses.copy()
         userClasses[self._model.body.name] = self._model.body
