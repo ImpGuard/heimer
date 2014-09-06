@@ -95,26 +95,26 @@ class FormatField:
         return self._field.shouldSeparateInstancesByAdditionalNewline
 
     def isPrimitive(self):
-        return _isPrimitive(self._field.typeName)
+        return isPrimitive(self._field.typeName)
 
     def isInteger(self):
-        return _isInteger(self._field.typeName)
+        return isInteger(self._field.typeName)
 
     def isFloat(self):
-        return _isFloat(self._field.typeName)
+        return isFloat(self._field.typeName)
 
     def isString(self):
-        return _isString(self._field.typeName)
+        return isString(self._field.typeName)
 
     def isBool(self):
-        return _isBool(self._field.typeName)
+        return isBool(self._field.typeName)
 
     def isList(self):
-        return _isList(self._field.typeName)
+        return isList(self._field.typeName)
 
     def listType(self):
         if self.isList():
-            return _listType(self._field.typeName)
+            return listType(self._field.typeName)
         else:
             return None
 
@@ -195,25 +195,24 @@ class FormatLine:
             s += str(f) + " "
         return s
 
-
-def _isPrimitive(typeName):
+def isPrimitive(typeName):
     return typeName == StringConstants.INTEGER_TYPE or typeName == StringConstants.FLOAT_TYPE or \
         typeName == StringConstants.BOOL_TYPE or typeName == StringConstants.STRING_TYPE or \
-        _isList(typeName)
+        isList(typeName)
 
-def _isInteger(typeName):
+def isInteger(typeName):
     return typeName == StringConstants.INTEGER_TYPE
 
-def _isFloat(typeName):
+def isFloat(typeName):
     return typeName == StringConstants.FLOAT_TYPE
 
-def _isString(typeName):
+def isString(typeName):
     return typeName == StringConstants.STRING_TYPE
 
-def _isBool(typeName):
+def isBool(typeName):
     return typeName == StringConstants.BOOL_TYPE
 
-def _isList(typeName):
+def isList(typeName):
     """ List is of the form 'list(listType)' where listType is a non-list primitive. """
     if len(typeName) <= 4:
         return False
@@ -221,14 +220,14 @@ def _isList(typeName):
         typeName[len(StringConstants.LIST_TYPE)] == "(" and \
         typeName[-1] == ")":
         listType = typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
-        if _isPrimitive(listType) and not _isList(listType):
+        if isPrimitive(listType) and not isList(listType):
             return True
         else:
             return False
     return False
 
-def _listType(typeName):
-    if _isList(typeName):
+def listType(typeName):
+    if isList(typeName):
         return typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
     else:
         return None
@@ -238,7 +237,7 @@ def _assertValidName( name, usedNames ):
     if name in usedNames:
         raise ValueError("Name conflict: User defined class/field must have unique name, the name \
             '%s' is used more than once." % name)
-    if _isPrimitive(name):
+    if isPrimitive(name):
         raise ValueError("Name conflict: '%s' is a primitive type and cannot be used as the name \
             of user defined classes/fields." % name)
 
@@ -247,7 +246,7 @@ def _assertValidType( typeName, userClasses ):
     if typeName in userClasses:
         return
     # Valid type if it's a primitive
-    elif _isPrimitive(typeName):
+    elif isPrimitive(typeName):
         return
     # Invalid type if it's a list but the list type is not a non-list primitive
     elif ( typeName.find(StringConstants.LIST_TYPE) == 0 and \
@@ -255,7 +254,7 @@ def _assertValidType( typeName, userClasses ):
             typeName[-1] == ")" ):
         # get the list type and remove whitespaces in the front and back
         listType = typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
-        if not _isPrimitive(listType) or _isList(listType):
+        if not isPrimitive(listType) or isList(listType):
             raise ValueError("The type of a list can only be a non-list primitive type.")
         return
     # Else invalid type.
@@ -266,9 +265,9 @@ def _assertValidClass( c, userClasses ):
     # Verify that every field in the class follows the spec
     for line in c.lines:
         for index, field in enumerate(line):
-            if _isPrimitive(field.typeName):
+            if isPrimitive(field.typeName):
                 # a list can only be the last field on a line
-                if _isList(field.typeName) and ( index + 1 ) < len(line):
+                if isList(field.typeName) and ( index + 1 ) < len(line):
                     raise ValueError("Format error in user defined class '%s': list can only be the \
                         last field on a line." % c.name)
             else:
