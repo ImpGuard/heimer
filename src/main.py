@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # Clean up provided flags
     if options.language == None:
         periodIndex = options.outputName.find(".")
-        if periodIndex == "-1":
+        if periodIndex == -1:
             options.language = DEFAULT_LANGUAGE
         else:
             extension = options.outputName[options.outputName.find(".") + 1:]
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     elif options.language == "c++":
         generator = CGenerator(options.outputName, formatObject)
     else:
-        optParser.print_help()
+        print "language not supported."
         sys.exit(1)
 
     generator.codeGen()
