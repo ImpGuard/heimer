@@ -53,11 +53,10 @@ class FieldDeclaration:
         self.typeName = typeName
         self.instanceRepetitionModeString = ""
         self.shouldSeparateInstancesByAdditionalNewline = False
-        self.newlinesAfterLastInstance = 0
 
     def __str__(self):
         return str(( self.name, self.typeName, self.instanceRepetitionModeString,
-            self.shouldSeparateInstancesByAdditionalNewline, self.newlinesAfterLastInstance ))
+            self.shouldSeparateInstancesByAdditionalNewline ))
 
 class ClassDeclaration:
 
@@ -77,13 +76,13 @@ class ClassDeclaration:
             result += "\n"
         return result[:-1]
 
-class HeimerObjectModel:
+class FormatFileObjectModel:
 
     def __init__(self):
         self.lineDelimiter = StringConstants.DEFAULT_SINGLE_LINE_DELIMITER
         self.commandLineOptions = []
         self.classes = []
-        self.body = ClassDeclaration("Body")
+        self.body = FieldDeclaration("body", "Body")
 
     def addCommandLineOption( self, flagName, variableName, optionType ):
         self.commandLineOptions.append(CommandLineOption( flagName, variableName, optionType ))
@@ -97,8 +96,7 @@ class HeimerObjectModel:
             result += str([ str(option) for option in self.commandLineOptions ]) + "\n"
         if len(self.classes) > 0:
             result += classDeclarationsAsString(self.classes) + "\n"
-        result += str(self.body)
-        return result
+        return result[:-1]
 
 def classDeclarationsAsString(classes):
     if len(classes) == 0:
@@ -129,7 +127,7 @@ class HeimerFormatFileParser:
     def __init__( self, formatFileName ):
         self.tagLineMarkerIntervals = {}
         self.failureMessages = []
-        self.objectModel = HeimerObjectModel()
+        self.objectModel = FormatFileObjectModel()
         try:
             heimerFile = open( formatFileName, "r" )
             self.formatInputAsLines = [line.strip() for line in heimerFile.readlines()]
@@ -208,20 +206,20 @@ class HeimerFormatFileParser:
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
             return
         bodyTagBeginMarker, bodyTagEndMarker = self.tagLineMarkerIntervals[StringConstants.BODY_TAG]
-        previousVariable = None
+        hasBegunParsingFields = False
+        body = ClassDeclaration("Body")
         for lineMarker in xrange( bodyTagBeginMarker + 1, bodyTagEndMarker ):
             currentStrippedLine = stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
             if not currentStrippedLine:
-                if previousVariable:
-                    previousVariable.newlinesAfterLastInstance += 1
+                if hasBegunParsingFields:
+                    body.addFieldsAsLine(list())
                 continue
             fields = fieldDeclarationsFromLine(currentStrippedLine)
             if len(fields) == 0:
                 return self.pushFailureMessage( "Expected field declaration for body.", lineMarker )
-            previousVariable = fields[-1]
-            self.objectModel.body.addFieldsAsLine(fields)
-        if previousVariable:
-            previousVariable.newlinesAfterLastInstance = 0
+            body.addFieldsAsLine(fields)
+            hasBegunParsingFields = True
+        self.objectModel.addClass(body)
 
     def printFailures(self):
         for failureMessage in self.failureMessages:
@@ -255,10 +253,18 @@ class HeimerFormatFileParser:
             return self.pushFailureMessage( "Input file empty or commented out." )
         if not lineStartsValidTag(self.formatInputAsLines[lineMarkerBegin]):
             return self.pushFailureMessage( "Expected tag declaration.", lineMarkerBegin )
+        lastTagName = None
         while lineMarkerBegin < len(self.formatInputAsLines):
             tagName = self.formatInputAsLines[lineMarkerBegin]
             if tagName in self.tagLineMarkerIntervals:
                 return self.pushFailureMessage( "Duplicate tag name.", self.tagLineMarkerIntervals[tagName][0], lineMarkerBegin )
             lineMarkerEnd = self.nextTagLocationFromLineMarker(lineMarkerBegin + 1)
-            self.tagLineMarkerIntervals[self.formatInputAsLines[lineMarkerBegin]] = ( lineMarkerBegin, lineMarkerEnd )
+            lastTagName = self.formatInputAsLines[lineMarkerBegin]
+            self.tagLineMarkerIntervals[lastTagName] = ( lineMarkerBegin, lineMarkerEnd )
             lineMarkerBegin = lineMarkerEnd
+        if lastTagName:
+            for lineMarker in xrange( len(self.formatInputAsLines) - 1, 0, -1 ):
+                if stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker]):
+                    lineMarkerBegin, _ = self.tagLineMarkerIntervals[lastTagName]
+                    self.tagLineMarkerIntervals[lastTagName] = lineMarkerBegin, lineMarker + 1
+                    break
