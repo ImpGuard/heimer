@@ -31,6 +31,10 @@ class HeimerFile:
         """ Helps write an import or include line at the top of the file disregarding the indent level. """
         self.fileContents = line + "\n" + self.fileContents
 
+    def writeNewline( self ):
+        """ Helper to write a simple newline, useful for adding an empty line. """
+        self.fileContents += "\n"
+
     def save(self):
         """ Saves the HeimerFile. Ideally, use only once per HeimerFile at the end of code generation. """
         outputFile = open( self.filename, "w")
