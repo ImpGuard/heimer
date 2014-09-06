@@ -1,4 +1,4 @@
-<single>
+<objects>
 Point
     x:int y:int
 

@@ -1,10 +1,8 @@
 <head>
             delimiter     ","
-<single>
+<objects>
     Point
         x:int y:int
-
-<multiple>
 
 Path
 count:int

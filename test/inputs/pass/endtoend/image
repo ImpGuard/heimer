@@ -1,8 +1,7 @@
-<single>
+<objects>
 Size
     x:int y:int
 
-<multiple>
 ImageHeader
     name:string
     size:Size

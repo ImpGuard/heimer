@@ -1,4 +1,4 @@
-<multiple>
+<objects>
 Path
     count:int
     points:Point:count

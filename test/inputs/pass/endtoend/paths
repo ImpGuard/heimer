@@ -1,8 +1,7 @@
-<single>
+<objects>
 vertex
     x:int y:int
 
-<multiple>
 path
     points:vertex:+
 
