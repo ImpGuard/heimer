@@ -21,6 +21,11 @@ class CodeGenerator:
         """ For generating the function to parse command line options. """
         raise NotImplementedError()
 
+    def generateClassParserFunctions(self):
+        """ For generating the functions to parse an input file, eating up the lines associated with
+        each user specified class. """
+        raise NotImplementedError()
+
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
         raise NotImplementedError()
@@ -44,6 +49,7 @@ class CodeGenerator:
         self.generateFileHeader()
         self.generateClasses()
         self.generateOptionParserFunction()
+        self.generateClassParserFunctions()
         self.generateInputParserFunction()
         self.generateMain()
         self.output.save()
