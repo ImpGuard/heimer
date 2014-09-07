@@ -28,17 +28,19 @@ class JavaGenerator(CodeGenerator):
         self.output.writeNewline()
 
         # Create parser function
-        self._beginBlock("private String parseOptions(String[] args)")
-        self._beginBlock("for ( int i = 0; i < args.length; i++ )")
-        self._beginBlock("if (args[i].equals(\"-" + options[0].flagName + "\")")
-        writeLine(options[0].variableName + " = (" + self._getTypeName(options[0].optionType) + ") args[i + 1];")
-        writeLine("i += 1;")
-        self._endBlock()
-        for option in options[1:]:
-            self._beginBlock("else if (args[i].equals(\"-" + option.flagName + "\")")
+        def handleOption( option, typeOfIf ):
+            self._beginBlock(typeOfIf + " (args[i].equals(\"-" + option.flagName + "\"))")
             writeLine(option.variableName + " = (" + self._getTypeName(option.optionType) + ") args[i + 1];")
             writeLine("i += 1;")
             self._endBlock()
+
+        self._beginBlock("private String parseOptions(String[] args)")
+        self._beginBlock("for ( int i = 0; i < args.length; i++ )")
+
+        # generate code for handling each option type
+        handleOption(options[0], "if")
+        map( lambda opt: handleOption(opt, "elif"), options[1:] )
+
         self._endBlock()
         self._endBlock()
 
