@@ -12,6 +12,10 @@ class CodeGenerator:
         """ For generating the file header, such as the import statements. """
         raise NotImplementedError()
 
+    def generateHelperFunctions(self):
+        """ Generate any helper functions that will be useful when parsing. """
+        raise NotImplementedError()
+
     def generateClasses(self):
         """ For generating code segment that defines all the data structures needed by the parser. """
         for className, fieldNamesAndTypes in self.format.classes():
@@ -19,11 +23,6 @@ class CodeGenerator:
 
     def generateOptionParserFunction(self):
         """ For generating the function to parse command line options. """
-        raise NotImplementedError()
-
-    def generateClassParserFunctions(self):
-        """ For generating the functions to parse an input file, eating up the lines associated with
-        each user specified class. """
         raise NotImplementedError()
 
     def generateInputParserFunction(self):
@@ -48,8 +47,8 @@ class CodeGenerator:
         """ This method is called to generate and write the parser to the specified file. """
         self.generateFileHeader()
         self.generateClasses()
+        self.generateHelperFunctions()
         self.generateOptionParserFunction()
-        self.generateClassParserFunctions()
         self.generateInputParserFunction()
         self.generateMain()
         self.output.save()
