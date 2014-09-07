@@ -21,6 +21,10 @@ class CodeGenerator:
         for className, fieldNamesAndTypes in self.format.classes():
             self.generateClass( className, fieldNamesAndTypes )
 
+    def generateOptionVariables(self):
+        """ Generate global option variables that will be initialized when parsing. """
+        raise NotImplementedError()
+
     def generateOptionParserFunction(self):
         """ For generating the function to parse command line options. """
         raise NotImplementedError()
@@ -47,6 +51,7 @@ class CodeGenerator:
         """ This method is called to generate and write the parser to the specified file. """
         self.generateFileHeader()
         self.generateClasses()
+        self.generateOptionVariables()
         self.generateHelperFunctions()
         self.generateOptionParserFunction()
         self.generateInputParserFunction()
