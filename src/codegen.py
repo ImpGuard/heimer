@@ -4,6 +4,7 @@ from util import HeimerFile
 class CodeGenerator:
 
     USER_ARGS = "userArgs"
+
     PARSE_INT = "parseInt"
     PARSE_BOOL = "parseBool"
     PARSE_STRING = "parseString"
@@ -13,7 +14,9 @@ class CodeGenerator:
     PARSE_STRING_LIST = "parseStringList"
     PARSE_FLOAT_LIST = "parseFloatList"
     PARSE_NEWLINE = "parseNewline"
-    PARSE_COMMAND_LINE_OPTIONS = "parseCommandLineOptions"
+
+    PARSE_OPTIONS = "parseOptions"
+    PARSE_INPUT = "parseInput"
 
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
@@ -70,3 +73,4 @@ class CodeGenerator:
         self.generateInputParserFunction()
         self.generateMain()
         self.output.save()
+        self.util.save()
