@@ -9,21 +9,21 @@ class JavaGenerator(CodeGenerator):
     def generateFileHeader(self):
         """ For generating the file header, such as the import statements. """
         # Import library headers
-        self.output.writeLine("import java.util.Scanner")
+        self.output.writeLine("import java.util.ArrayList;")
         # Import class files
-        for (className, fields) in self.format.classes():
-            self.output.writeLine("import " + className)
+        # for (className, fields) in self.format.classes():
+        #     self.output.writeLine("import " + className + ";")
         self.output.writeNewline()
 
     def generateHelperFunctions(self):
         """ Generate any helper functions that will be useful when parsing. """
         # Convert value to bool
-        self._beginBlock("public static convertToBool(String name)")
+        self._beginBlock("public static boolean convertToBool(String name)")
         self._beginBlock("if (name.equals(\"1\") || name.toLowerCase().equals(\"true\"))")
         self.output.writeLine("return true;")
         self._endBlock()
-        self._beginBlock("elif (name.equals(\"0\") || name.toLowerCase().equals(\"false\"))")
-        self.output.writeLine("return = false;")
+        self._beginBlock("else if (name.equals(\"0\") || name.toLowerCase().equals(\"false\"))")
+        self.output.writeLine("return false;")
         self._endBlock()
         self.output.writeLine("throw new NumberFormatException();")
         self._endBlock()
@@ -31,6 +31,8 @@ class JavaGenerator(CodeGenerator):
 
     def generateOptionVariables(self):
         """ Generate global option variables that will be initialized when parsing. """
+        self.output.writeLine("public static ArrayList<String> userArgs = new ArrayList<String>();")
+
         if len(self.format.commandLineOptions()) == 0:
             return
 
@@ -89,14 +91,20 @@ class JavaGenerator(CodeGenerator):
             self._endBlock()
 
         # Create option parser function
-        self._beginBlock("private String parseOptions(String[] args)")
+        self._beginBlock("private static void parseOptions(String[] args)")
         self.generateHelpMessage()
         self._beginBlock("try")
         self._beginBlock("for ( int i = 0; i < args.length; i++ )")
 
         # generate code for handling each option type
         handleOption(options[0], "if")
-        map( lambda opt: handleOption(opt, "elif"), options[1:] )
+        map( lambda opt: handleOption(opt, "else if"), options[1:] )
+
+        # generate code for handling extraneous inputs
+        self._beginBlock("else")
+        writeLine("userArgs.add(args[i]);")
+        writeLine("i += 1;")
+        self._endBlock()
 
         # End of for loop
         self._endBlock()
@@ -109,8 +117,15 @@ class JavaGenerator(CodeGenerator):
         self.output.writeLine("System.exit(1);")
         self._endBlock()
 
+        # generate code for returning the filename
+        self._beginBlock("if (userArgs.size() == 0)")
+        writeLine("System.out.println(USAGE);")
+        writeLine("System.exit(1);")
+        self._endBlock()
+
         # End of function
         self._endBlock()
+        self.output.writeNewline()
 
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
@@ -118,11 +133,17 @@ class JavaGenerator(CodeGenerator):
 
     def generateRunFunction(self):
         """ For generating the function that will be called by the user. """
-        pass # FIXME
+        self._beginBlock("public static void run(String[] args)")
+        self.output.writeLine("parseOptions(args);")
+        self._endBlock()
+        self.output.writeNewline()
 
     def generateMain(self):
         """ For generating the empty main method that the user can fill in. """
-        pass # FIXME
+        self._beginBlock("public static void main(String[] args)")
+        self.output.writeLine("run(args);")
+        self._endBlock()
+
 
     def generateClass( self, className, fieldNamesAndTypes ):
         """ Helper function for generating the code segement defining a class (or the corresponding
@@ -138,6 +159,7 @@ class JavaGenerator(CodeGenerator):
         self.generateHelperFunctions()
         self.generateOptionParserFunction()
         self.generateInputParserFunction()
+        self.generateRunFunction()
         self.generateMain()
         self._endBlock()
 
