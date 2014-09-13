@@ -1,9 +1,10 @@
 from parser import StringConstants, FieldDeclaration
+from collections import OrderedDict
 
 class HeimerFormat:
     def __init__( self, objectModel ):
         self._model = objectModel
-        self._userClasses = dict()
+        self._userClasses = OrderedDict()
         # The class names are stored twice because we want to perserve the ordering of the classes
         self._userClassNames = list()
         # Make sure the user defined classes are of the correct format, else raise error.
@@ -281,7 +282,7 @@ def _assertValidClass( c, userClasses ):
                         type '%s', there can be exactly one field with user defined class as type in \
                         each line." % ( c.name, field.tpyName))
 
-def test(fileName="examples/graph_example"):
+def getFormat(fileName="examples/graph_example"):
     from parser import HeimerFormatFileParser
     p = HeimerFormatFileParser(fileName)
     return HeimerFormat(p.objectModel)
