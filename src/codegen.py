@@ -110,3 +110,6 @@ class CodeGenerator:
         self.generateDataFile()
         self.generateUtilFile()
         self.generateMainFile()
+        self.output.save()
+        self.util.save()
+        self.data.save()
