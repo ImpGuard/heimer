@@ -59,3 +59,14 @@ class CodeGenerator:
         self.generateMain()
         self.output.save()
 
+CodeGenerator.PARSE_INT = "parseInt"
+CodeGenerator.PARSE_BOOL = "parseBool"
+CodeGenerator.PARSE_STRING = "parseString"
+CodeGenerator.PARSE_FLOAT = "parseFloat"
+CodeGenerator.PARSE_INT_LIST = "parseIntList"
+CodeGenerator.PARSE_BOOL_LIST = "parseBoolList"
+CodeGenerator.PARSE_STRING_LIST = "parseStringList"
+CodeGenerator.PARSE_FLOAT_LIST = "parseFloatList"
+CodeGenerator.PARSE_NEWLINE = "parseNewline"
+CodeGenerator.PARSED_COMMAND_LINE_OPTIONS = "parseCommandLineOptions"
+CodeGenerator.USER_ARGS = "userArgs"
