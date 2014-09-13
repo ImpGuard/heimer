@@ -5,6 +5,7 @@ class CodeGenerator:
 
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
+        self.util = HeimerFile(filename)
         self.format = format
         self.body = format.body()
 
@@ -13,7 +14,7 @@ class CodeGenerator:
         raise NotImplementedError()
 
     def generateHelperFunctions(self):
-        """ Generate any helper functions that will be useful when parsing. """
+        """ Generate any helper functions that will be useful when parsing in the separate util file. """
         raise NotImplementedError()
 
     def generateClasses(self):
