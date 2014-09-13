@@ -3,6 +3,18 @@ from util import HeimerFile
 
 class CodeGenerator:
 
+    USER_ARGS = "userArgs"
+    PARSE_INT = "parseInt"
+    PARSE_BOOL = "parseBool"
+    PARSE_STRING = "parseString"
+    PARSE_FLOAT = "parseFloat"
+    PARSE_INT_LIST = "parseIntList"
+    PARSE_BOOL_LIST = "parseBoolList"
+    PARSE_STRING_LIST = "parseStringList"
+    PARSE_FLOAT_LIST = "parseFloatList"
+    PARSE_NEWLINE = "parseNewline"
+    PARSE_COMMAND_LINE_OPTIONS = "parseCommandLineOptions"
+
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
         self.util = HeimerFile(filename)
@@ -58,15 +70,3 @@ class CodeGenerator:
         self.generateInputParserFunction()
         self.generateMain()
         self.output.save()
-
-CodeGenerator.PARSE_INT = "parseInt"
-CodeGenerator.PARSE_BOOL = "parseBool"
-CodeGenerator.PARSE_STRING = "parseString"
-CodeGenerator.PARSE_FLOAT = "parseFloat"
-CodeGenerator.PARSE_INT_LIST = "parseIntList"
-CodeGenerator.PARSE_BOOL_LIST = "parseBoolList"
-CodeGenerator.PARSE_STRING_LIST = "parseStringList"
-CodeGenerator.PARSE_FLOAT_LIST = "parseFloatList"
-CodeGenerator.PARSE_NEWLINE = "parseNewline"
-CodeGenerator.PARSED_COMMAND_LINE_OPTIONS = "parseCommandLineOptions"
-CodeGenerator.USER_ARGS = "userArgs"
