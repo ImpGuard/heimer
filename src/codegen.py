@@ -5,6 +5,7 @@ class CodeGenerator:
 
     # Filenames
     UTIL_FILE = "HeimerUtil"
+    DATA_FILE = "HeimerData"
 
     # Used variable names
     USER_ARGS = "userArgs"
