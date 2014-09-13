@@ -3,8 +3,13 @@ from util import HeimerFile
 
 class CodeGenerator:
 
+    # Filenames
+    UTIL_FILE = "HeimerUtil"
+
+    # Used variable names
     USER_ARGS = "userArgs"
 
+    # Method/Function names
     PARSE_INT = "parseInt"
     PARSE_BOOL = "parseBool"
     PARSE_STRING = "parseString"
@@ -14,7 +19,6 @@ class CodeGenerator:
     PARSE_STRING_LIST = "parseStringList"
     PARSE_FLOAT_LIST = "parseFloatList"
     PARSE_NEWLINE = "parseNewline"
-
     PARSE_OPTIONS = "parseOptions"
     PARSE_INPUT = "parseInput"
 
