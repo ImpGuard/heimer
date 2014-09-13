@@ -46,3 +46,20 @@ def testHeimerImport():
     assert_equal( resultFile.readline().strip(), "abc" )
     resultFile.close()
 
+@with_setup(teardown = removeFiles)
+def testHeimerWrite():
+    simpleFile = HeimerFile(filename)
+    simpleFile.indent()
+    simpleFile.write("abc")
+    simpleFile.write("def")
+    simpleFile.writeLine("ghi")
+    simpleFile.write("lmn")
+    simpleFile.writeNewline()
+    simpleFile.write("opq")
+    simpleFile.save()
+
+    resultFile = open( filename, "r" )
+    assert_equal( resultFile.readline().strip(), "abcdefghi" )
+    assert_equal( resultFile.readline().strip(), "lmn" )
+    assert_equal( resultFile.readline().strip(), "opq" )
+    resultFile.close()
