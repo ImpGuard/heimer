@@ -4,8 +4,8 @@ from util import HeimerFile
 class CodeGenerator:
 
     # Filenames
-    UTIL_FILE = "HeimerUtil"
-    DATA_FILE = "HeimerData"
+    UTIL_FILE_NAME = "HeimerUtil"
+    DATA_FILE_NAME = "HeimerData"
 
     # Used variable names
     USER_ARGS = "userArgs"
@@ -25,26 +25,57 @@ class CodeGenerator:
 
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
+        self.util = HeimerFile(UTIL_FILE_NAME)
+        self.data = HeimerFile(DATA_FILE_NAME)
         self.format = format
         self.body = format.body()
+        self.currentFile = None
         self.initialize()
 
     def initialize(self):
         """ Perform additional initialization if required. """
         pass
 
-    def generateFileHeader(self):
-        """ For generating the file header, such as the import statements. """
+    def generateDataFile(self):
+        """ Generate classes in a separate data file. """
+        self.generateDataFileHeader()
+        self.generateClasses()
+
+    def generateUtilFile(self):
+        """ Generate helper functions in the separate util file. """
+        self.generateUtilFileHeader()
+        self.generateHelperFunctions()
+
+    def generateMainFile(self):
+        """ Generate main file where the main function resides. """
+        self.currentFile = self.output
+        self.generateMainFileHeader()
+        self.generateOptionVariables()
+        self.generateOptionParserFunction()
+        self.generateInputParserFunction()
+        self.generateRunFunction()
+        self.generateMainFunction()
+
+    def generateDataFileHeader(self):
+        """ For generating the data file header, such as the import statements. """
         raise NotImplementedError()
 
-    def generateHelperFunctions(self):
-        """ Generate any helper functions that will be useful when parsing in the separate util file. """
+    def generateUtilFileHeader(self):
+        """ For generating the util file header, such as the import statements. """
+        raise NotImplementedError()
+
+    def generateMainFileHeader(self):
+        """ For generating the main file header, such as the import statements. """
         raise NotImplementedError()
 
     def generateClasses(self):
         """ For generating code segment that defines all the data structures needed by the parser. """
         for className, fieldNamesAndTypes in self.format.classes():
             self.generateClass( className, fieldNamesAndTypes )
+
+    def generateHelperFunctions(self):
+        """ For generating the helper functions that will be useful when parsing in the util file. """
+        raise NotImplementedError()
 
     def generateOptionVariables(self):
         """ Generate global option variables that will be initialized when parsing. """
@@ -62,7 +93,7 @@ class CodeGenerator:
         """ For generating the function that will be called by the user. """
         raise NotImplementedError()
 
-    def generateMain(self):
+    def generateMainFunction(self):
         """ For generating the empty main method that the user can fill in. """
         raise NotImplementedError()
 
@@ -74,11 +105,6 @@ class CodeGenerator:
 
     def codeGen(self):
         """ This method is called to generate and write the parser to the specified file. """
-        self.generateFileHeader()
-        self.generateClasses()
-        self.generateOptionVariables()
-        self.generateHelperFunctions()
-        self.generateOptionParserFunction()
-        self.generateInputParserFunction()
-        self.generateMain()
-        self.output.save()
+        self.generateDataFile()
+        self.generateUtilFile()
+        self.generateMainFile()
