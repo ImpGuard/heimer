@@ -20,9 +20,13 @@ class CodeGenerator:
 
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
-        self.util = HeimerFile(filename)
         self.format = format
         self.body = format.body()
+        self.initialize()
+
+    def initialize(self):
+        """ Perform additional initialization if required. """
+        pass
 
     def generateFileHeader(self):
         """ For generating the file header, such as the import statements. """
@@ -73,4 +77,3 @@ class CodeGenerator:
         self.generateInputParserFunction()
         self.generateMain()
         self.output.save()
-        self.util.save()
