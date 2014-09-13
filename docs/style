@@ -52,6 +52,14 @@ Ex.
 - Special comments should be used for special cases:
     * "FIX ME" for code that does not work at the moment "HACKHACK" for code
     * that isn't pristine and should be rewritten if there is time
+- Divider makes the purpose of a section of code clear
+Ex.
+    code for stuff
+    ################################################################################
+    # Generate Data File
+    ################################################################################
+    code for generating data files
+
 
 Doc Strings
 - Docstrings use triple double-quote
