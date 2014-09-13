@@ -38,11 +38,13 @@ class CodeGenerator:
 
     def generateDataFile(self):
         """ Generate classes in a separate data file. """
+        self.currentFile = self.data
         self.generateDataFileHeader()
         self.generateClasses()
 
     def generateUtilFile(self):
         """ Generate helper functions in the separate util file. """
+        self.currentFile = self.util
         self.generateUtilFileHeader()
         self.generateHelperFunctions()
 
