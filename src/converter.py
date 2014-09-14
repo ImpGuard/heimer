@@ -27,7 +27,7 @@ class HeimerFormat:
         classes = []
         for className in self._userClassNames:
             c = self._userClasses[className]
-            fields = dict()
+            fields = OrderedDict()
             for line in c.lines:
                 for field in line:
                     fields[field.name] = field.typeName
