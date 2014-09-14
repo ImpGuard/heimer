@@ -14,6 +14,10 @@ class HeimerFormat:
             self._userClasses[c.name] = c
             self._userClassNames.append(c.name)
         self._body = FormatField( self._model.body, self._userClasses )
+        self._classse = OrderedDict()
+        for className in self.userClasses:
+            if className != self._model.body.typeName:
+            self._classse[className] = FormatField( FieldDeclaration( "N/A", className ), self._userClasses ).lines()
 
     def lineDelimiter(self):
         return self._model.lineDelimiter
@@ -22,6 +26,9 @@ class HeimerFormat:
         return self._model.commandLineOptions
 
     def classes(self):
+        return self._classse
+
+    def classFormats(self):
         """ Return a list of tuples, where the tuple contains the class name and a dictionary with
         key-value pair of field name and field type (in string). """
         classes = []

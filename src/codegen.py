@@ -29,6 +29,7 @@ class CodeGenerator:
         self.util = HeimerFile(CodeGenerator.UTIL_FILE_NAME)
         self.data = HeimerFile(CodeGenerator.DATA_FILE_NAME)
         self.format = format
+        self.classes = format.classes()
         self.body = format.body()
         self.currentFile = None
         self.initialize()
@@ -62,7 +63,7 @@ class CodeGenerator:
 
     def generateClasses(self):
         """ For generating code segment that defines all the data structures needed by the parser. """
-        for className, fieldNamesAndTypes in self.format.classes():
+        for className, fieldNamesAndTypes in self.format.classFormats():
             self.generateClass( className, fieldNamesAndTypes )
 
     def generateClass( self, className, fieldNamesAndTypes ):
