@@ -13,11 +13,10 @@ class HeimerFormat:
             _assertValidClass( c, self._userClasses )
             self._userClasses[c.name] = c
             self._userClassNames.append(c.name)
-        self._body = FormatField( self._model.body, self._userClasses )
         self._classse = OrderedDict()
         for className in self.userClasses:
-            if className != self._model.body.typeName:
             self._classse[className] = FormatField( FieldDeclaration( "N/A", className ), self._userClasses ).lines()
+        self._body = FormatField( self._model.body, self._userClasses )
 
     def lineDelimiter(self):
         return self._model.lineDelimiter
