@@ -1,21 +1,5 @@
 import re
-
-class StringConstants:
-
-    HEAD_TAG = "<head>"
-    OPTIONS_TAG = "<options>"
-    OBJECTS_TAG = "<objects>"
-    BODY_TAG = "<body>"
-    INLINE_COMMENT = "#"
-    DEFAULT_SINGLE_LINE_DELIMITER = " "
-    INTEGER_TYPE = "int"
-    FLOAT_TYPE = "float"
-    STRING_TYPE = "string"
-    BOOL_TYPE = "bool"
-    LIST_TYPE = "list"
-    LINE_ONE_OR_MORE = "+"
-    LINE_ZERO_OR_MORE = "*"
-    SEPARATE_BY_ADDITIONAL_NEWLINE_MODE = "!"
+from util import StringConstants
 
 class RegexPatterns:
     """ Patterns used for parsing. Except when parsing options, names are considered simple words with underscores. """

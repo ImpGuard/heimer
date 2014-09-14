@@ -57,3 +57,106 @@ class HeimerFile:
         extensionIndex = self.filename.rfind("." + extensionString)
         if extensionIndex == -1 or extensionIndex != len(self.filename) - len(extensionString) - 1:
             self.filename += "." + extensionString
+
+class StringConstants:
+
+    HEAD_TAG = "<head>"
+    OPTIONS_TAG = "<options>"
+    OBJECTS_TAG = "<objects>"
+    BODY_TAG = "<body>"
+    INLINE_COMMENT = "#"
+    DEFAULT_SINGLE_LINE_DELIMITER = " "
+    INTEGER_TYPE = "int"
+    FLOAT_TYPE = "float"
+    STRING_TYPE = "string"
+    BOOL_TYPE = "bool"
+    LIST_TYPE = "list"
+    LINE_ONE_OR_MORE = "+"
+    LINE_ZERO_OR_MORE = "*"
+    SEPARATE_BY_ADDITIONAL_NEWLINE_MODE = "!"
+
+def isPrimitive(typeName):
+    return typeName == StringConstants.INTEGER_TYPE or typeName == StringConstants.FLOAT_TYPE or \
+        typeName == StringConstants.BOOL_TYPE or typeName == StringConstants.STRING_TYPE or \
+        isList(typeName)
+
+def isInteger(typeName):
+    return typeName == StringConstants.INTEGER_TYPE
+
+def isFloat(typeName):
+    return typeName == StringConstants.FLOAT_TYPE
+
+def isString(typeName):
+    return typeName == StringConstants.STRING_TYPE
+
+def isBool(typeName):
+    return typeName == StringConstants.BOOL_TYPE
+
+def isList(typeName):
+    """ List is of the form 'list(listType)' where listType is a non-list primitive. """
+    if len(typeName) <= 4:
+        return False
+    if typeName.find(StringConstants.LIST_TYPE) == 0 and \
+        typeName[len(StringConstants.LIST_TYPE)] == "(" and \
+        typeName[-1] == ")":
+        listType = typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
+        if isPrimitive(listType) and not isList(listType):
+            return True
+        else:
+            return False
+    return False
+
+def listType(typeName):
+    if isList(typeName):
+        return typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
+    else:
+        return None
+
+def _assertValidName( name, usedNames ):
+    """ Verify a name isn't already used by another user defined class or field. """
+    if name in usedNames:
+        raise ValueError("Name conflict: User defined class/field must have unique name, the name \
+            '%s' is used more than once." % name)
+    if isPrimitive(name):
+        raise ValueError("Name conflict: '%s' is a primitive type and cannot be used as the name \
+            of user defined classes/fields." % name)
+
+def _assertValidType( typeName, userClasses ):
+    # Valid type if it's a user defined class
+    if typeName in userClasses:
+        return
+    # Valid type if it's a primitive
+    elif isPrimitive(typeName):
+        return
+    # Invalid type if it's a list but the list type is not a non-list primitive
+    elif ( typeName.find(StringConstants.LIST_TYPE) == 0 and \
+            typeName[len(StringConstants.LIST_TYPE)] == "(" and \
+            typeName[-1] == ")" ):
+        # get the list type and remove whitespaces in the front and back
+        listType = typeName[ len(StringConstants.LIST_TYPE) + 1 : len(typeName) - 1 ].strip()
+        if not isPrimitive(listType) or isList(listType):
+            raise ValueError("The type of a list can only be a non-list primitive type.")
+        return
+    # Else invalid type.
+    raise ValueError("Unknown field type '%s', it should either be a primitive type or \
+        a user defined class." % typeName)
+
+def _assertValidClass( c, userClasses ):
+    # Verify that every field in the class follows the spec
+    for line in c.lines:
+        for index, field in enumerate(line):
+            if isPrimitive(field.typeName):
+                # a list can only be the last field on a line
+                if isList(field.typeName) and ( index + 1 ) < len(line):
+                    raise ValueError("Format error in user defined class '%s': list can only be the \
+                        last field on a line." % c.name)
+            else:
+                if field.typeName not in userClasses:
+                    raise ValueError("Format error in user defined class '%s': unknown field type '%s', \
+                        all types must be either primitive type or a already defined user class."
+                        % ( c.name, field.typeName ))
+                # There is more than one field on this line
+                if len(line) > 1:
+                    raise ValueError("Format error in user defined class '%s': unexpected field \
+                        type '%s', there can be exactly one field with user defined class as type in \
+                        each line." % ( c.name, field.tpyName))
