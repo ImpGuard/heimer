@@ -22,6 +22,7 @@ class CodeGenerator:
     PARSE_NEWLINE = "parseNewline"
     PARSE_OPTIONS = "parseOptions"
     PARSE_INPUT = "parseInput"
+    RUN = "run"
 
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
