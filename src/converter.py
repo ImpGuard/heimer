@@ -1,4 +1,4 @@
-from parser import StringConstants, FieldDeclaration
+from parser import FieldDeclaration
 from collections import OrderedDict
 from util import *
 
@@ -16,7 +16,7 @@ class HeimerFormat:
             self._userClassNames.append(c.name)
         self._classes = OrderedDict()
         for className in self._userClasses:
-            self._classes[className] = FormatField( FieldDeclaration( "N/A", className ), self._userClasses ).lines()
+            self._classes[className] = _generateFormatLines( className, self._userClasses )
         self._body = FormatField( self._model.body, self._userClasses )
 
     def lineDelimiter(self):
@@ -50,32 +50,9 @@ class FormatField:
         self._field = field
         self._userClasses = userClasses
         self._parent = parent
+        # Verify this field has a valid type
         _assertValidType( field.typeName, userClasses )
-        self._class = None if self.isPrimitive() else userClasses[field.typeName]
-        self._lines = []
-        self._variables = dict()
-        # If it is a user defined class, recursively construct FormatField from the variables
-        # contained in the class.
-        if self._class:
-            for line in self._class.lines:
-                fields = []
-                for var in line:
-                    _assertValidName( var.name, self._variables.keys() + userClasses.keys() )
-                    obj = FormatField( var, userClasses, parent=self )
-                    self._variables[var.name] = obj
-                    fields.append(obj)
-                    # Make sure if the variable has a instance repetition mode, it is either an
-                    # integer, a special symbol, or an integer variable already defined in this
-                    # particular user class.
-                    mode = obj.instanceRepetitionModeString()
-                    if ( mode and type(mode) != int and \
-                        mode != StringConstants.LINE_ONE_OR_MORE and \
-                        mode != StringConstants.LINE_ZERO_OR_MORE and \
-                        ( mode not in self._variables or \
-                        not self._variables[mode].isInteger() ) ):
-                        raise ValueError("Unknown repetition mode '%s': it must be either an integer, \
-                            the symbol '+' or '*', or an int variable already defined in class." % mode)
-                self._lines.append(FormatLine( fields, self ))
+
 
     def name(self):
         return self._field.name
@@ -87,19 +64,14 @@ class FormatField:
         """ The parent of this object """
         return self._parent
 
-    def lines(self):
-        """ Return a list of FormatLine objects, each representing a line in this field.
-        Empty line denotes a line without any field. """
-        return self._lines
-
-    def instanceRepetitionModeString(self):
+    def _instanceRepetitionModeString(self):
         mode = self._field.instanceRepetitionModeString
         try:
             return int(mode)
         except ValueError as e:
             return mode
 
-    def shouldSeparateInstancesByAdditionalNewline(self):
+    def _shouldSeparateInstancesByAdditionalNewline(self):
         return self._field.shouldSeparateInstancesByAdditionalNewline
 
     def isPrimitive(self):
@@ -128,30 +100,24 @@ class FormatField:
 
     def __str__(self):
         s = ""
-        if self.isPrimitive():
-            s += "%s:%s" % ( self.name(), self.typeName() )
-            if self.instanceRepetitionModeString():
-                s += ":%s" % self.instanceRepetitionModeString()
-                if self.shouldSeparateInstancesByAdditionalNewline():
-                    s += "!"
-        else:
-            for index, line in enumerate(self.lines()):
-                s += str(line)
-                if index < len(self.lines()) - 1:
-                    s += "\n"
+        s += "%s:%s" % ( self.name(), self.typeName() )
+        if self._instanceRepetitionModeString():
+            s += ":%s" % self._instanceRepetitionModeString()
+            if self._shouldSeparateInstancesByAdditionalNewline():
+                s += "!"
         return s
 
 class FormatLine:
     """ Representing a line in a class declaration or body of the format file.
     May contains zero or more fields. """
-    def __init__( self, fields, container ):
+    def __init__( self, fields, container=None ):
         self._fields = fields
         # container is the FormatField object representing the class field that contains this line
         self._container = container
         self._currentIndex = 0
         # Repetition string only makes sense when a line has exactly one field
-        self._repetitionString = fields[0].instanceRepetitionModeString() if len(fields) == 1 else ""
-        self._isSplitByNewline = fields[0].shouldSeparateInstancesByAdditionalNewline() if \
+        self._repetitionString = fields[0]._instanceRepetitionModeString() if len(fields) == 1 else ""
+        self._isSplitByNewline = fields[0]._shouldSeparateInstancesByAdditionalNewline() if \
             len(fields) == 1 else "" if len(fields) == 1 else ""
 
     def container(self):
@@ -166,7 +132,7 @@ class FormatLine:
     def isZeroOrMoreRepetition(self):
         return self._repetitionString == StringConstants.LINE_ZERO_OR_MORE
 
-    def isONEOrMoreRepetition(self):
+    def isOneOrMoreRepetition(self):
         return self._repetitionString == StringConstants.LINE_ONE_OR_MORE
 
     def isIntegerRepetition(self):
@@ -202,6 +168,32 @@ class FormatLine:
         for f in self:
             s += str(f) + " "
         return s
+
+def _generateFormatLines( className, userClasses ):
+    """ Return a list of FormatLine, where each FormatLine contains the fields of the given class. """
+    lines = []
+    variables = dict()
+    for line in userClasses[className].lines:
+        fields = []
+        for var in line:
+            _assertValidName( var.name, variables.keys() + userClasses.keys() )
+            obj = FormatField( var, userClasses )
+            variables[var.name] = obj
+            fields.append(obj)
+            # Make sure if the variable has a instance repetition mode, it is either an
+            # integer, a special symbol, or an integer variable already defined in this
+            # particular user class.
+            mode = obj._instanceRepetitionModeString()
+            if ( mode and type(mode) != int and \
+                mode != StringConstants.LINE_ONE_OR_MORE and \
+                mode != StringConstants.LINE_ZERO_OR_MORE and \
+                ( mode not in variables or \
+                not self._variables[mode].isInteger() ) ):
+                raise ValueError("Unknown repetition mode '%s': it must be either an integer, \
+                    the symbol '+' or '*', or an int variable already defined in class." % mode)
+        lines.append(FormatLine( fields ))
+    return lines
+
 
 def _assertValidName( name, usedNames ):
     """ Verify a name isn't already used by another user defined class or field. """
@@ -256,3 +248,5 @@ def getFormat(fileName="examples/graph_example"):
     from parser import HeimerFormatFileParser
     p = HeimerFormatFileParser(fileName)
     return HeimerFormat(p.objectModel)
+
+f = getFormat()
