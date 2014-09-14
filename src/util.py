@@ -41,7 +41,7 @@ class HeimerFile:
         """ Helps write an import or include line at the top of the file disregarding the indent level. """
         self.fileContents = line + "\n" + self.fileContents
 
-    def writeNewline( self ):
+    def writeNewline(self):
         """ Helper to write a simple newline, useful for adding an empty line. """
         self.fileContents += "\n"
         self.shouldIndent = True
@@ -51,3 +51,9 @@ class HeimerFile:
         outputFile = open( self.filename, "w")
         outputFile.write(self.fileContents)
         outputFile.close()
+
+    def setExtension( self, extensionString ):
+        """ Sets the extension of this file to the given extension, if applicable. """
+        extensionIndex = self.filename.rfind("." + extensionString)
+        if extensionIndex == -1 or extensionIndex != len(self.filename) - len(extensionString) - 1:
+            self.filename += "." + extensionString
