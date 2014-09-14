@@ -13,9 +13,9 @@ class HeimerFormat:
             _assertValidClass( c, self._userClasses )
             self._userClasses[c.name] = c
             self._userClassNames.append(c.name)
-        self._classse = OrderedDict()
+        self._classes = OrderedDict()
         for className in self.userClasses:
-            self._classse[className] = FormatField( FieldDeclaration( "N/A", className ), self._userClasses ).lines()
+            self._classes[className] = FormatField( FieldDeclaration( "N/A", className ), self._userClasses ).lines()
         self._body = FormatField( self._model.body, self._userClasses )
 
     def lineDelimiter(self):
@@ -25,7 +25,7 @@ class HeimerFormat:
         return self._model.commandLineOptions
 
     def classes(self):
-        return self._classse
+        return self._classes
 
     def classFormats(self):
         """ Return a list of tuples, where the tuple contains the class name and a dictionary with
