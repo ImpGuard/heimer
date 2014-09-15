@@ -94,6 +94,11 @@ class CodeGenerator:
         """ For generating the helper functions that will be useful when parsing in the util file. """
         raise NotImplementedError()
 
+    def generateClassParserFunction( self, className, lines ):
+        """ For generating the helper functions for parsing a user defined class. The first argument
+        is the class name and the second argument is a list of FormatLine's. """
+        raise NotImplementedError
+
     ################################################################################
     # Generate Main File
     ################################################################################
