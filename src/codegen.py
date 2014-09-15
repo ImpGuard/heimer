@@ -63,13 +63,17 @@ class CodeGenerator:
 
     def generateClasses(self):
         """ For generating code segment that defines all the data structures needed by the parser. """
-        for className, fieldNamesAndTypes in self.format.classFormats():
-            self.generateClass( className, fieldNamesAndTypes )
+        for className, lines in self.classes:
+            fields = []
+            for line in lines:
+                for field in line:
+                    fields.append(field)
+            self.generateClass( className, fields )
 
-    def generateClass( self, className, fieldNamesAndTypes ):
+    def generateClass( self, className, fields ):
         """ Helper function for generating the code segement defining a class (or the corresponding
-        data structure). The first argument is the class name and the second argument is a dictionary
-        containing key-value pairs of the form (field name, field type), both as strings. """
+        data structure). The first argument is the class name and the second argument is a list of 
+        fields (in order) of that class. """
         raise NotImplementedError()
 
     ################################################################################

@@ -26,20 +26,9 @@ class HeimerFormat:
         return self._model.commandLineOptions
 
     def classes(self):
+        """ Return a ordered dictionary with class names as keys and the corresponding list of
+        FormatLine's (containing the fields on that line) as values. """
         return self._classes
-
-    def classFormats(self):
-        """ Return a list of tuples, where the tuple contains the class name and a dictionary with
-        key-value pair of field name and field type (in string). """
-        classes = []
-        for className in self._userClassNames:
-            c = self._userClasses[className]
-            fields = OrderedDict()
-            for line in c.lines:
-                for field in line:
-                    fields[field.name] = field.typeName
-            classes.append( ( className, fields ) )
-        return classes
 
     def body(self):
         return self._body
