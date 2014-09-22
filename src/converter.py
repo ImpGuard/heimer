@@ -233,9 +233,7 @@ def _assertValidClass( c, userClasses ):
                         type '%s', there can be exactly one field with user defined class as type in \
                         each line." % ( c.name, field.tpyName))
 
-def getFormat(fileName="examples/graph_example"):
+def getFormat(fileName):
     from parser import HeimerFormatFileParser
     p = HeimerFormatFileParser(fileName)
     return HeimerFormat(p.objectModel)
-
-f = getFormat()
