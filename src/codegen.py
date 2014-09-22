@@ -99,6 +99,10 @@ class CodeGenerator:
         is the class name and the second argument is a list of FormatLine's. """
         raise NotImplementedError
 
+    def generateLineParserFunction( self, line ):
+        """ For generating the helper functions for parsing a line in the input file. """
+        raise NotImplementedError
+
     ################################################################################
     # Generate Main File
     ################################################################################
