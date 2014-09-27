@@ -17,7 +17,7 @@ class HeimerFormat:
         self._classes = OrderedDict()
         for className in self._userClasses:
             self._classes[className] = _generateFormatLines( className, self._userClasses )
-        self._body = FormatField( self._model.body, self._userClasses )
+        self._bodyTypeName = self._model.body.typeName
 
     def lineDelimiter(self):
         return self._model.lineDelimiter
@@ -30,8 +30,8 @@ class HeimerFormat:
         FormatLine's (containing the fields on that line) as values. """
         return self._classes
 
-    def body(self):
-        return self._body
+    def bodyTypeName(self):
+        return self._bodyTypeName
 
 
 class FormatField:
