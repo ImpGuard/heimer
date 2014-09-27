@@ -1,8 +1,6 @@
 from codegen import CodeGenerator
-from parser import StringConstants
-from converter import * #??
 from javagenStatic import *
-from util import HeimerFile
+from util import *
 
 from optparse import OptionParser
 import os
@@ -14,7 +12,7 @@ class JavaGenerator(CodeGenerator):
         """ Perform additional initialization if required. """
         self.output.setExtension("java")
         self.util.setExtension("java")
-        self.classes = []
+        self.classFiles = []
 
     def codeGen(self):
         """ This method is called to generate and write the parser to the specified file. """
@@ -23,28 +21,26 @@ class JavaGenerator(CodeGenerator):
         self.generateClasses()
         self.output.save()
         self.util.save()
-        map(lambda c: c.save(), self.classes)
+        map(lambda c: c.save(), self.classFiles)
 
     ################################################################################
     # Generate Data File
     ################################################################################
 
-    def generateClass( self, className, fieldNamesAndTypes ):
+    def generateClass( self, className, fields ):
         """ Helper function for generating the code segement defining a class (or the corresponding
-        data structure). The first argument is the class name and the second argument is a dictionary
-        containing key-value pairs of the form (field name, field type), both as strings. """
+        data structure). The first argument is the class name and the second argument is a list of
+        fields (in order) of that class. """
         classFile = HeimerFile(className + ".java")
-        self.classes.append(classFile)
+        self.classFiles.append(classFile)
 
         self.currentFile = classFile
 
         self._beginBlock("public " + className )
-        for field in fieldNamesAndTypes:
-            typeName = fieldNamesAndTypes[field]
-            classFile.writeLine("public static " + self._getTypeName(typeName) + " " + field + ";")
+        for field in fields:
+            classFile.writeLine("public " + self._getTypeName(field) + " " + field.name() + ";")
 
         self._endBlock()
-
 
     ################################################################################
     # Generate Util File
@@ -58,7 +54,8 @@ class JavaGenerator(CodeGenerator):
 
     def generateUtilFileHeader(self):
         """ For generating the util file header, such as the import statements. """
-        self._importClasses()
+        # Import library headers
+        self.currentFile.writeLine("import java.util.ArrayList;")
         self.currentFile.writeNewline()
 
     def generateHelperFunctions(self):
@@ -80,19 +77,15 @@ class JavaGenerator(CodeGenerator):
         self.currentFile = self.output
         self.generateMainFileHeader()
         self._beginBlock("public class " + os.path.splitext(os.path.basename(self.currentFile.filename))[0])
+        self.generateOptionVariables()
         self.generateMainFunction()
         self.generateRunFunction()
-        self.generateOptionVariables()
         self.generateOptionParserFunction()
         self.generateInputParserFunction()
         self._endBlock()
 
     def generateMainFileHeader(self):
         """ For generating the main file header, such as the import statements. """
-        # Import Heimer Files
-        self.currentFile.writeLine("import " + CodeGenerator.UTIL_FILE_NAME + ";")
-        # Import class files
-        self._importClasses()
         # Import library headers
         self.currentFile.writeLine("import java.util.ArrayList;")
         self.currentFile.writeNewline()
@@ -106,7 +99,7 @@ class JavaGenerator(CodeGenerator):
 
         options = self.format.commandLineOptions()
         for option in options:
-            self.currentFile.writeLine("public static " + self._getTypeName(option.optionType) + " " + option.variableName + ";")
+            self.currentFile.writeLine("public static " + self._getBasicTypeName(option.optionType) + " " + option.variableName + ";")
         self.currentFile.writeNewline()
 
     def generateHelpMessage(self):
@@ -175,7 +168,6 @@ class JavaGenerator(CodeGenerator):
         # generate code for handling extraneous inputs
         self._beginBlock("else")
         writeLine(CodeGenerator.USER_ARGS + ".add(args[i]);")
-        writeLine("i += 1;")
         self._endBlock()
 
         # End of for loop
@@ -221,11 +213,7 @@ class JavaGenerator(CodeGenerator):
     # Helper Functions
     ################################################################################
 
-    def _importClasses(self):
-        for (className, fields) in self.format.classFormats():
-            self.currentFile.writeLine("import " + className + ";")
-
-    def _getTypeName( self, typeName ):
+    def _getBasicTypeName( self, typeName ):
         if isInteger(typeName):
             return "Integer"
         elif isString(typeName):
@@ -233,9 +221,20 @@ class JavaGenerator(CodeGenerator):
         elif isBool(typeName):
             return "Boolean"
         elif isList(typeName):
-            return "ArrayList<" + _getTypeName(listType(typeName)) + ">"
+            return "ArrayList<" + getBasicTypeName(listType(typeName)) + ">"
         else:
+            return None
+
+
+    def _getTypeName( self, field ):
+        typeName = self._getBasicTypeName(field.typeName())
+        if typeName != None:
             return typeName
+
+        if field.isClassList():
+            return "ArrayList<" + field.typeName() + ">"
+        else:
+            return field.typeName()
 
     def _beginBlock( self, line ):
         self.currentFile.writeLine(line)
