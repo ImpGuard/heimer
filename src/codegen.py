@@ -26,6 +26,7 @@ class CodeGenerator:
 
     def __init__( self, filename, format ):
         self.output = HeimerFile(filename)
+        # FIX ME (same folder as filename)
         self.util = HeimerFile(CodeGenerator.UTIL_FILE_NAME)
         self.data = HeimerFile(CodeGenerator.DATA_FILE_NAME)
         self.format = format
