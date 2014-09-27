@@ -181,7 +181,7 @@ def _generateFormatLines( className, userClasses ):
                 mode != StringConstants.LINE_ONE_OR_MORE and \
                 mode != StringConstants.LINE_ZERO_OR_MORE and \
                 ( mode not in variables or \
-                not self._variables[mode].isInteger() ) ):
+                not variables[var].isInteger() ) ):
                 raise ValueError("Unknown repetition mode '%s': it must be either an integer, \
                     the symbol '+' or '*', or an int variable already defined in class." % mode)
         lines.append(FormatLine( fields ))
