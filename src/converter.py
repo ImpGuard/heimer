@@ -53,6 +53,9 @@ class FormatField:
         """ The parent of this object """
         return self._parent
 
+    def isClassList(self):
+        return self._instanceRepetitionModeString() == ""
+
     def _instanceRepetitionModeString(self):
         mode = self._field.instanceRepetitionModeString
         try:
@@ -62,6 +65,7 @@ class FormatField:
 
     def _shouldSeparateInstancesByAdditionalNewline(self):
         return self._field.shouldSeparateInstancesByAdditionalNewline
+
 
     def isPrimitive(self):
         return isPrimitive(self._field.typeName)
@@ -115,7 +119,7 @@ class FormatLine:
     def isEmpty(self):
         return len(self._fields) == 0
 
-    def repetitionString(self):
+    def repetitionType(self):
         return self._repetitionString
 
     def isZeroOrMoreRepetition(self):
