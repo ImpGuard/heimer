@@ -54,7 +54,7 @@ class FormatField:
         return self._parent
 
     def isClassList(self):
-        return self._instanceRepetitionModeString() == ""
+        return self._instanceRepetitionModeString() != ""
 
     def _instanceRepetitionModeString(self):
         mode = self._field.instanceRepetitionModeString
