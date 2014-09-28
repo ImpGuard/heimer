@@ -111,13 +111,16 @@ class FormatLine:
         # Repetition string only makes sense when a line has exactly one field
         self._repetitionString = fields[0]._instanceRepetitionModeString() if len(fields) == 1 else ""
         self._isSplitByNewline = fields[0]._shouldSeparateInstancesByAdditionalNewline() if \
-            len(fields) == 1 else "" if len(fields) == 1 else ""
+            len(fields) == 1 else ""
 
     def container(self):
         return self._container
 
     def isEmpty(self):
         return len(self._fields) == 0
+
+    def numFields(self):
+        return len(self._field)
 
     def repetitionType(self):
         return self._repetitionString
