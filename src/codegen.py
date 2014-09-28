@@ -1,5 +1,5 @@
 """ Base class for generating the parser code. Subclass this for every language supported by Heimer. """
-from util import HeimerFile
+from util import HeimerFile, StringConstants
 
 class CodeGenerator:
 
