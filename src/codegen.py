@@ -107,7 +107,6 @@ class CodeGenerator:
         is the class name and the second argument is a list of FormatLine's. """
         raise NotImplementedError
 
-
     ################################################################################
     # Generate Main File
     ################################################################################
