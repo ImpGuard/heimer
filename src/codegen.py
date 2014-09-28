@@ -87,6 +87,7 @@ class CodeGenerator:
         self.currentFile = self.util
         self.generateUtilFileHeader()
         self.generateHelperFunctions()
+        self.generateClassParserFunctions()
 
     def generateUtilFileHeader(self):
         """ For generating the util file header, such as the import statements. """
@@ -96,14 +97,16 @@ class CodeGenerator:
         """ For generating the helper functions that will be useful when parsing in the util file. """
         raise NotImplementedError()
 
+    def generateClassParserFunctions(self):
+        """ For generating all the functions for parsing user defined classes. """
+        for className, lines in self.classes.items():
+            self.generateClassParserFunction( className, lines )
+
     def generateClassParserFunction( self, className, lines ):
-        """ For generating the helper functions for parsing a user defined class. The first argument
+        """ For generating a helper functions for parsing a user defined class. The first argument
         is the class name and the second argument is a list of FormatLine's. """
         raise NotImplementedError
 
-    def generateLineParserFunction( self, line ):
-        """ For generating the helper functions for parsing a line in the input file. """
-        raise NotImplementedError
 
     ################################################################################
     # Generate Main File
