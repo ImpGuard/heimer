@@ -9,6 +9,7 @@ class CodeGenerator:
 
     # Used variable names
     USER_ARGS = "userArgs"
+    PARSED_OBJ = "parsedObject"
 
     # Method/Function names
     PARSE_INT = "parseInt"
