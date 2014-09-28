@@ -2,12 +2,20 @@ from codegen import CodeGenerator
 
 def staticHelpers():
     helpers = """
-public static int javagenParseInt(String s)
+public static int javagenParseInt(String s, int[] lineNumber)
 {
-\treturn Integer.parseInt(s);
+\ttry
+\t{
+\t\treturn Integer.parseInt(s);
+\t}
+\tcatch (NumberFormatException e)
+\t{
+\t\tthrow new NumberFormatException(
+\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as int\");
+\t}
 }
 
-public static boolean javagenParseBool(String s)
+public static boolean javagenParseBool(String s, int[] lineNumber)
 {
 \tif (s.equals("1") || s.toLowerCase().equals("true"))
 \t{
@@ -17,53 +25,62 @@ public static boolean javagenParseBool(String s)
 \t{
 \t\treturn false;
 \t}
-\tthrow new NumberFormatException();
+\tthrow new NumberFormatException(
+\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as bool\");
 }
 
-public static String javagenParseString(String s)  {
+public static String javagenParseString(String s, int[] lineNumber)  {
 \treturn s;
 }
 
-public static float parseFloat(String s) {
-\treturn Float.parseFloat(s);
+public static float parseFloat(String s, int[] lineNumber) {
+\ttry
+\t{
+\t\treturn Float.parseFloat(s);
+\t}
+\tcatch (NumberFormatException e)
+\t{
+\t\tthrow new NumberFormatException(
+\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as float\");
+\t}
 }
 
-public static ArrayList<Integer> javagenParseIntList(String[] strings)
+public static ArrayList<Integer> javagenParseIntList(String[] strings, int[] lineNumber)
 {
 \tArrayList<Integer> resval = new ArrayList<Integer>();
 \tfor (String s : strings)
 \t{
-\t\tresval.add(javagenParseInt(s));
+\t\tresval.add(javagenParseInt(s, lineNumber));
 \t}
 \treturn resval;
 }
 
-public static ArrayList<Boolean> javagenParseBoolList(String[] strings)
+public static ArrayList<Boolean> javagenParseBoolList(String[] strings, int[] lineNumber)
 {
 \tArrayList<Boolean> resval = new ArrayList<Boolean>();
 \tfor (String s : strings)
 \t{
-\t\tresval.add(javagenParseBool(s));
+\t\tresval.add(javagenParseBool(s, lineNumber));
 \t}
 \treturn resval;
 }
 
-public static ArrayList<String> javagenParseStringList(String[] strings)
+public static ArrayList<String> javagenParseStringList(String[] strings, int[] lineNumber)
 {
 \tArrayList<String> resval = new ArrayList<String>();
 \tfor (String s : strings)
 \t{
-\t\tresval.add(javagenParseString(s));
+\t\tresval.add(javagenParseString(s, lineNumber));
 \t}
 \treturn resval;
 }
 
-public static ArrayList<Float> javagenParseFloatList(String[] strings)
+public static ArrayList<Float> javagenParseFloatList(String[] strings, int[] lineNumber)
 {
 \tArrayList<Float> resval = new ArrayList<Float>();
 \tfor (String s : strings)
 \t{
-\t\tresval.add(javagenParseFloat(s));
+\t\tresval.add(javagenParseFloat(s, lineNumber));
 \t}
 \treturn resval;
 }

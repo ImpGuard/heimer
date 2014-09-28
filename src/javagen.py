@@ -16,9 +16,9 @@ class JavaGenerator(CodeGenerator):
 
     def codeGen(self):
         """ This method is called to generate and write the parser to the specified file. """
+        self.generateClasses()
         self.generateUtilFile()
         self.generateMainFile()
-        self.generateClasses()
         self.output.save()
         self.util.save()
         map(lambda c: c.save(), self.classFiles)
@@ -31,14 +31,23 @@ class JavaGenerator(CodeGenerator):
         """ Helper function for generating the code segement defining a class (or the corresponding
         data structure). The first argument is the class name and the second argument is a list of
         fields (in order) of that class. """
+        self.typeNameToParseFuncName[className] = "parse%s" % className
         classFile = HeimerFile(className + ".java")
         self.classFiles.append(classFile)
-
         self.currentFile = classFile
 
-        self._beginBlock("public " + className )
+        shouldImportArrayList = False
+
+        self._beginBlock("public class " + className )
+
         for field in fields:
+            if field.isRepeating() or field.isList():
+                shouldImportArrayList = True
             classFile.writeLine("public " + self._getTypeName(field) + " " + field.name() + ";")
+
+        if shouldImportArrayList:
+            classFile.writeImportLine("")
+            classFile.writeImportLine("import java.util.ArrayList;")
 
         self._endBlock()
 
@@ -47,10 +56,12 @@ class JavaGenerator(CodeGenerator):
     ################################################################################
 
     def generateUtilFile(self):
-        """ Generate helper functions in the separate util file. """
         self.currentFile = self.util
         self.generateUtilFileHeader()
+        self._beginBlock("public class " + CodeGenerator.UTIL_FILE_NAME)
         self.generateHelperFunctions()
+        self.generateClassParserFunctions()
+        self._endBlock()
 
     def generateUtilFileHeader(self):
         """ For generating the util file header, such as the import statements. """
@@ -60,14 +71,175 @@ class JavaGenerator(CodeGenerator):
 
     def generateHelperFunctions(self):
         """ For generating the helper functions that will be useful when parsing in the util file. """
-        self._beginBlock("public class " + CodeGenerator.UTIL_FILE_NAME)
-
         # Static helpers for primitives
         helpers = staticHelpers()
         helpers.replace("\t", HeimerFile.indentString)
         map(lambda s: self.currentFile.writeLine(s), helpers.splitlines())
+        self.currentFile.writeNewline()
 
+    def generateClassParserFunction( self, className, lines ):
+        """ For generating a helper functions for parsing a user defined class. The first argument
+        is the class name and the second argument is a list of FormatLine's. """
+        writeLine = self.currentFile.writeLine
+        write = self.currentFile.write
+
+        def isSimplePrimitive(field):
+            return field.isInteger() or field.isFloat() or field.isString() or field.isBool()
+
+        def generateSetup():
+            # Helper to do some setup in every parser function
+            writeLine(className + " result = new " + className + "();")
+            didSplit = False
+            didRepeat = False
+            didRepeatPlus = False
+
+            for line in lines:
+                didRepeat = didRepeat or line.isRepeating()
+                didRepeatPlus = didRepeatPlus or  line.isOneOrMoreRepetition()
+                didSplit = didSplit or line.numFields() > 1
+                for field in line:
+                    didSplit = didSplit or field.isList()
+
+            if didSplit:
+                writeLine("String[] fields;")
+            if didRepeat:
+                writeLine("int prevLineNumber = lineNumber[0];")
+            if didRepeatPlus:
+                writeLine("boolean didRepeatOnce;")
+
+        def handleEmptyLine():
+            # Handle the empty line case
+            self._beginBlock("if (lines[lineNumber[0]] != \"\")")
+            writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
+                "\": Should be an empty line\");")
+            self._endBlock()
+            writeLine("lineNumber[0] += 1;")
+
+        def handleSimpleLineOneField(field):
+            # Helper for handleSimpleLine
+            if isSimplePrimitive(field):
+                # Field is simple, just parse it
+                writeLine("result." + field.name() + " = "
+                    + self.typeNameToParseFuncName[field.typeName()] + "(lines[lineNumber[0]], lineNumber);")
+                writeLine("lineNumber[0] += 1;")
+            elif field.isPrimitive():
+                # Field is primitive list, split line
+                writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
+                write("result." + field.name() + " = "
+                    + self.typeNameToParseFuncName["list(%s)" % field.typeName()] + "(fields, lineNumber);")
+                handleListPrimitive(field, "fields")
+                writeLine("lineNumber[0] += 1;")
+            else:
+                # Field is a class, recurse
+                writeLine("result." + field.name() + " = "
+                    + self.typeNameToParseFuncName[field.typeName()] + "(lines, lineNumber);")
+
+        def handleSimpleLineMultipleField(index, field):
+            # Helper for handleSimpleLine
+            if isSimplePrimitive(field):
+                writeLine("result." + field.name() + " = "
+                    + self.typeNameToParseFuncName[field.typeName()]
+                    + "(fields[" + str(index) + "], lineNumber);")
+            elif field.isPrimitive():
+                # Field is primitive list, use rest of fields
+                writeLine("result." + field.name() + " = "
+                    + self.typeNameToParseFuncName["list(%s)" % field.typeName()]
+                    + "(fields.subList(" + str(index) + ", fields.length()), lineNumber);")
+            else:
+                # Field is a class? Cannot be!
+                raise Exception("This should never happen.")
+
+        def handleSimpleLine(line):
+            if line.numFields() == 1:
+                # Only one field, no need to split unnecessarily
+                handleSimpleLineOneField(line.getField(0))
+            else:
+                # Multiple fields, split it
+                writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
+                self._beginBlock("if (fields.length != " + str(line.numFields()) + ")")
+                writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] + " +
+                    "\": Expecting " + str(line.numFields()) + " fields (\" + fields.length + \" found)\");")
+                self._endBlock()
+                for index, field in enumerate(line):
+                    handleSimpleLineMultipleField(index, field)
+
+                writeLine("lineNumber[0] += 1;")
+
+        def handleRepeatingLineForField(field):
+            # Helper for handleRepeating
+            if isSimplePrimitive(field):
+                # Field is simple, just parse it
+                writeLine("result." + field.name() + ".add("
+                    + self.typeNameToParseFuncName[field.typeName()] + "(lines[lineNumber[0]], lineNumber));")
+                writeLine("lineNumber[0] += 1;")
+            elif field.isPrimitive():
+                # Field is primitive list, split line
+                writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("result." + field.name() + ".add("
+                    + self.typeNameToParseFuncName["list(%s)" % field.typeName()] + "(fields, lineNumber));")
+                handleListPrimitive(field, "fields")
+                writeLine("lineNumber[0] += 1;")
+            else:
+                # Field is a class, recurse
+                writeLine("result." + field.name() + ".add("
+                    + self.typeNameToParseFuncName[field.typeName()] + "(lines, lineNumber));")
+
+        def handleRepeatingLine(line):
+            # Must be a primitive or class repeated
+            if line.isIntegerRepetition() or line.isVariableRepetition():
+                # Constant repetition amount
+                repetitionString = ""
+                if line.isIntegerRepetition():
+                    repetitionString = str(line.repetitionAmountString())
+                else:
+                    repetitionString =  className + "." + line.repetitionAmountString()
+                self._beginBlock("for (int i = 0; i < " + repetitionString + "; i++)")
+                handleRepeatingLineForField(line.getField(0))
+                self._endBlock()
+            elif line.isZeroOrMoreRepetition():
+                self._beginBlock("try")
+                self._beginBlock("while (true)")
+                handleRepeatingLineForField(line.getField(0))
+                writeLine("prevLineNumber = lineNumber[0];")
+                self._endBlock()
+                self._endBlock()
+                self._beginBlock("catch (Exception e)")
+                writeLine("lineNumber[0] = prevLineNumber;")
+                self._endBlock()
+            elif line.isOneOrMoreRepetition:
+                self._beginBlock("try")
+                writeLine("didRepeatOnce = false;")
+                self._beginBlock("while (true)")
+                handleRepeatingLineForField(line.getField(0))
+                writeLine("prevLineNumber = lineNumber[0];")
+                writeLine("didRepeatOnce = true;")
+                self._endBlock()
+                self._endBlock()
+                self._beginBlock("catch (Exception e)")
+                self._beginBlock("if (!didRepeatOnce)")
+                writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
+                    "\": Expecting at least 1" + line.getField(0).typeName() + " (0 found)\");")
+                self._endBlock()
+                writeLine("lineNumber[0] = prevLineNumber;")
+                self._endBlock()
+            else:
+                raise Exception("This should never happen.")
+
+
+        self._beginBlock("public static " + className + " parse" + className + "(String[] lines, int[] lineNumber)")
+        generateSetup()
+
+        for line in lines:
+            if line.isEmpty():
+                handleEmptyLine()
+            elif line.isRepeating():
+                handleRepeatingLine(line)
+            else:
+                handleSimpleLine(line)
+
+        writeLine("return result;")
         self._endBlock()
+        self.currentFile.writeNewline()
 
     ################################################################################
     # Generate Main File
@@ -143,7 +315,8 @@ class JavaGenerator(CodeGenerator):
     def generateMainFunction(self):
         """ For generating the empty main method that the user can fill in. """
         self._beginBlock("public static void main(String[] args)")
-        self.currentFile.writeLine(CodeGenerator.RUN + "(args);")
+        self.currentFile.writeLine(self.bodyTypeName + " " + CodeGenerator.PARSED_OBJ + " = "
+            + CodeGenerator.RUN + "(args);")
         self._endBlock()
         self.currentFile.writeNewline()
 
@@ -159,19 +332,20 @@ class JavaGenerator(CodeGenerator):
         def handleOption( option, typeOfIf ):
             self._beginBlock(typeOfIf + " (args[i].equals(\"-" + option.flagName + "\"))")
             if isBool(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_BOOL + "(args[i + 1]);")
+                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_BOOL + "(args[i + 1], fakeLineNumber);")
             elif isInteger(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_INT + "(args[i + 1]);")
+                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_INT + "(args[i + 1], fakeLineNumber);")
             elif isFloat(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_FLOAT + "(args[i + 1]);")
+                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_FLOAT + "(args[i + 1], fakeLineNumber);")
             else:
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_STRING + "(args[i + 1]);")
+                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_STRING + "(args[i + 1], fakeLineNumber);")
             writeLine("i += 1;")
             self._endBlock()
 
         # Create option parser function
         self._beginBlock("private static void " + CodeGenerator.PARSE_OPTIONS + "(String[] args)")
         self._beginBlock("try")
+        writeLine("int[] fakeLineNumber = {-1};")
         self._beginBlock("for ( int i = 0; i < args.length; i++ )")
 
         # generate code for handling each option type
@@ -206,17 +380,29 @@ class JavaGenerator(CodeGenerator):
 
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
-        writeLine = self.currentFile.writeLine
+        self._beginBlock("private static " + self.bodyTypeName
+            + " " + CodeGenerator.PARSE_INPUT + "(String[] lines)")
+        self.currentFile.writeLine("int[] lineNumber = {1};")
 
-        self._beginBlock("private static void " + CodeGenerator.PARSE_INPUT + "(String[] lines)")
+        self._beginBlock("try")
+        self.currentFile.writeLine("return "
+            + CodeGenerator.UTIL_FILE_NAME + ".parse" + self.bodyTypeName + "(lines, lineNumber);")
+        self._endBlock()
+        self._beginBlock("catch (Exception e)")
+        self.currentFile.writeLine("System.out.println(e.getMessage());")
+        self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
 
+        self.currentFile.writeLine("return null;")
+
+        self._endBlock()
 
     def generateRunFunction(self):
         """ For generating the function that will be called by the user. """
         writeLine = self.currentFile.writeLine
 
-        self._beginBlock("public static void " + CodeGenerator.RUN + "(String[] args)")
+        self._beginBlock("public static " + self.bodyTypeName + " "
+            + CodeGenerator.RUN + "(String[] args)")
 
         # Parse Options
         self.currentFile.writeLine(CodeGenerator.PARSE_OPTIONS + "(args);")
@@ -233,7 +419,7 @@ class JavaGenerator(CodeGenerator):
         self._endBlock()
         writeLine("s.close();")
         writeLine("String[] inputLines = list.toArray(new String[list.size()]);")
-        writeLine(CodeGenerator.PARSE_INPUT + "(inputLines);")
+        writeLine("return " + CodeGenerator.PARSE_INPUT + "(inputLines);")
         self._endBlock()
         # File not found!
         self._beginBlock("catch (FileNotFoundException e)")
@@ -246,6 +432,8 @@ class JavaGenerator(CodeGenerator):
         self.currentFile.writeLine("System.out.println(USAGE);");
         self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
+
+        writeLine("return null;")
 
         self._endBlock()
         self.currentFile.writeNewline()
@@ -262,20 +450,20 @@ class JavaGenerator(CodeGenerator):
         elif isBool(typeName):
             return "Boolean"
         elif isList(typeName):
-            return "ArrayList<" + getBasicTypeName(listType(typeName)) + ">"
+            return "ArrayList<" + self._getBasicTypeName(listType(typeName)) + ">"
         else:
             return None
 
 
     def _getTypeName( self, field ):
         typeName = self._getBasicTypeName(field.typeName())
-        if typeName != None:
-            return typeName
+        if typeName == None:
+            typeName = field.typeName()
 
-        if field.isClassList():
-            return "ArrayList<" + field.typeName() + ">"
+        if field.isRepeating():
+            return "ArrayList<" + typeName + ">"
         else:
-            return field.typeName()
+            return typeName
 
     def _beginBlock( self, line ):
         self.currentFile.writeLine(line)
