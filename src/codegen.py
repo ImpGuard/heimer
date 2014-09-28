@@ -33,6 +33,16 @@ class CodeGenerator:
         self.classes = format.classes()
         self.bodyTypeName = format.bodyTypeName()
         self.currentFile = None
+        self.typeNameToParseFuncName = {
+            StringConstants.INTEGER_TYPE: CodeGenerator.PARSE_INT,
+            StringConstants.FLOAT_TYPE: CodeGenerator.PARSE_FLOAT,
+            StringConstants.STRING_TYPE: CodeGenerator.PARSE_STRING,
+            StringConstants.BOOL_TYPE: CodeGenerator.PARSE_BOOL,
+            "list(%s)" % StringConstants.INTEGER_TYPE: CodeGenerator.PARSE_INT_LIST,
+            "list(%s)" % StringConstants.FLOAT_TYPE: CodeGenerator.PARSE_FLOAT_LIST,
+            "list(%s)" % StringConstants.STRING_TYPE: CodeGenerator.PARSE_STRING_LIST,
+            "list(%s)" % StringConstants.BOOL_TYPE: CodeGenerator.PARSE_BOOL_LIST,
+        }
         self.initialize()
 
     def initialize(self):
@@ -70,6 +80,8 @@ class CodeGenerator:
                 for field in line:
                     fields.append(field)
             self.generateClass( className, fields )
+            #The name for the parseing function for class X is parseX
+            self.typeNameToParseFuncName[className] = "parse%s" % className
 
     def generateClass( self, className, fields ):
         """ Helper function for generating the code segement defining a class (or the corresponding

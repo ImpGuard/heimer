@@ -55,17 +55,6 @@ class PythonGenerator(CodeGenerator):
         primitiveParsers =  pygenStatic.getPrimitiveParsers()
         self.write(primitiveParsers)
 
-    typeNameToParseFuncName = {
-        StringConstants.INTEGER_TYPE: CodeGenerator.PARSE_INT,
-        StringConstants.FLOAT_TYPE: CodeGenerator.PARSE_FLOAT,
-        StringConstants.STRING_TYPE: CodeGenerator.PARSE_STRING,
-        StringConstants.BOOL_TYPE: CodeGenerator.PARSE_BOOL,
-        "list(%s)" % StringConstants.INTEGER_TYPE: CodeGenerator.PARSE_INT_LIST,
-        "list(%s)" % StringConstants.FLOAT_TYPE: CodeGenerator.PARSE_FLOAT_LIST,
-        "list(%s)" % StringConstants.STRING_TYPE: CodeGenerator.PARSE_STRING_LIST,
-        "list(%s)" % StringConstants.BOOL_TYPE: CodeGenerator.PARSE_BOOL_LIST,
-    }
-
     def generateClassParserFunction( self, className, lines ):
         """ For generating the helper functions for parsing a user defined class. The first argument
         is the class name and the second argument is a list of FormatLine's. """
@@ -73,8 +62,6 @@ class PythonGenerator(CodeGenerator):
         # The argument to the parser should be the list of lines to be parsed and the current
         # line counter.
         # If parsed successfully, the parser should return a X object and the new line counter.
-        typeNameToParseFuncName[className] = "parse%s" % className #Add the parse func name to the map
-
         self._beginBlock("def parse%s( lines, currentLineNumber ):" % className)
         self.writeLine("userClass = %s()" % className)
         self.writeLine("lineNumber = currentLineNumber")
@@ -86,20 +73,28 @@ class PythonGenerator(CodeGenerator):
             self.writeLine("raise Exception('Parser Error on line %d: line is not empty when it \
                 should be.') % (lineNumber)")
             self._endBlock()
+            self.writeLine("lineNumber += 1")
 
         def handleSimpleLine(line):
             # The case where there is only one primitve field that is not a list.
             if line.numFields() == 1 and line.getField(0).isPrimitive() and not line.getField(0).isList():
-                pass
+                field = line.getField(0)
+                self.writeLine("userClass.%s = %s( line[lineNumber], lineNumber )" % ( field.name(), \
+                    self.typeNameToParseFuncName[field.typeName()] ))
             # The case where ther is only one list primitive field.
             elif line.numFields() == 1 and line.getField(0).isPrimitive() and line.getField(0).isList():
-                pass
+                field = line.getField(0)
+                listType = "list(%s)" % field.typeName
+                self.writeLine("line = lines[lineNumber].split('%s')" % self.format.lineDelimiter())
+                self.writeLine("userClass.%s = %s( line[lineNumber], lineNumber )" % ( field.name(), \
+                    self.typeNameToParseFuncName[field.typeName()] ))
             # The case where there is only one non-primitive field.
             elif line.numFields() == 1 and not line.getField(0).isPrimitive():
-                pass
+                field = line.getField(0)
             # The case where there is multiple fields on a line.
             else:
                 pass
+            self.writeLine("lineNumber += 1")
 
         def handleRepeatingLine(line):
             pass
