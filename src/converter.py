@@ -125,8 +125,8 @@ class FormatLine:
     def getField( self, index ):
         return self._fields[index]
 
-    def repetitionType(self):
-        return self._repetitionString
+    def repetitionAmountString(self):
+        return str(self._repetitionString)
 
     def isRepeating(self):
         return self._repetitionString != ""
