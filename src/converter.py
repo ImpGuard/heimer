@@ -33,7 +33,6 @@ class HeimerFormat:
     def bodyTypeName(self):
         return self._bodyTypeName
 
-
 class FormatField:
     def __init__( self, field, userClasses, parent=None ):
         self._field = field
