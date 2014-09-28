@@ -62,6 +62,7 @@ class JavaGenerator(CodeGenerator):
         """ For generating the helper functions that will be useful when parsing in the util file. """
         self._beginBlock("public class " + CodeGenerator.UTIL_FILE_NAME)
 
+        # Static helpers for primitives
         helpers = staticHelpers()
         helpers.replace("\t", HeimerFile.indentString)
         map(lambda s: self.currentFile.writeLine(s), helpers.splitlines())
@@ -77,6 +78,7 @@ class JavaGenerator(CodeGenerator):
         self.currentFile = self.output
         self.generateMainFileHeader()
         self._beginBlock("public class " + os.path.splitext(os.path.basename(self.currentFile.filename))[0])
+        self.generateHelpMessage()
         self.generateOptionVariables()
         self.generateMainFunction()
         self.generateRunFunction()
@@ -88,6 +90,9 @@ class JavaGenerator(CodeGenerator):
         """ For generating the main file header, such as the import statements. """
         # Import library headers
         self.currentFile.writeLine("import java.util.ArrayList;")
+        self.currentFile.writeLine("import java.util.Scanner;")
+        self.currentFile.writeLine("import java.io.File;")
+        self.currentFile.writeLine("import java.io.FileNotFoundException;")
         self.currentFile.writeNewline()
 
     def generateOptionVariables(self):
@@ -122,7 +127,7 @@ class JavaGenerator(CodeGenerator):
             helpMessage.append(helpString)
 
         # Generate the help message multiline string
-        self.currentFile.write("String USAGE = \"" + helpMessage[0] + "\\n\"")
+        self.currentFile.write("public static String USAGE = \"" + helpMessage[0] + "\\n\"")
         for index, helpString in enumerate(helpMessage[1:]):
             self.currentFile.writeNewline()
             if index == 0:
@@ -132,6 +137,15 @@ class JavaGenerator(CodeGenerator):
 
         if len(helpMessage) > 1:
             self.currentFile.dedent()
+
+        self.currentFile.writeNewline()
+
+    def generateMainFunction(self):
+        """ For generating the empty main method that the user can fill in. """
+        self._beginBlock("public static void main(String[] args)")
+        self.currentFile.writeLine(CodeGenerator.RUN + "(args);")
+        self._endBlock()
+        self.currentFile.writeNewline()
 
     def generateOptionParserFunction(self):
         """ For generating the function to parse command line options. """
@@ -157,7 +171,6 @@ class JavaGenerator(CodeGenerator):
 
         # Create option parser function
         self._beginBlock("private static void " + CodeGenerator.PARSE_OPTIONS + "(String[] args)")
-        self.generateHelpMessage()
         self._beginBlock("try")
         self._beginBlock("for ( int i = 0; i < args.length; i++ )")
 
@@ -193,21 +206,49 @@ class JavaGenerator(CodeGenerator):
 
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
-        pass
+        writeLine = self.currentFile.writeLine
+
+        self._beginBlock("private static void " + CodeGenerator.PARSE_INPUT + "(String[] lines)")
+        self._endBlock()
+
 
     def generateRunFunction(self):
         """ For generating the function that will be called by the user. """
-        self._beginBlock("public static void " + CodeGenerator.RUN + "(String[] args)")
-        self.output.writeLine(CodeGenerator.PARSE_OPTIONS + "(args);")
-        self._endBlock()
-        self.output.writeNewline()
+        writeLine = self.currentFile.writeLine
 
-    def generateMainFunction(self):
-        """ For generating the empty main method that the user can fill in. """
-        self._beginBlock("public static void main(String[] args)")
-        self.output.writeLine(CodeGenerator.RUN + "(args);")
+        self._beginBlock("public static void " + CodeGenerator.RUN + "(String[] args)")
+
+        # Parse Options
+        self.currentFile.writeLine(CodeGenerator.PARSE_OPTIONS + "(args);")
+
+        # Parse input file if it exists
+        self._beginBlock("if (" + CodeGenerator.USER_ARGS + ".size() != 0)")
+        writeLine("String filename = " + CodeGenerator.USER_ARGS + ".get(0);")
+        # Try to parse the file
+        self._beginBlock("try")
+        writeLine("Scanner s = new Scanner(new File(filename));")
+        writeLine("ArrayList<String> list = new ArrayList<String>();")
+        self._beginBlock("while (s.hasNextLine())")
+        writeLine("list.add(s.nextLine());")
         self._endBlock()
-        self.output.writeNewline()
+        writeLine("s.close();")
+        writeLine("String[] inputLines = list.toArray(new String[list.size()]);")
+        writeLine(CodeGenerator.PARSE_INPUT + "(inputLines);")
+        self._endBlock()
+        # File not found!
+        self._beginBlock("catch (FileNotFoundException e)")
+        self.currentFile.writeLine("System.out.println(\"Input file '\" + filename + \"' not found.\");")
+        self.currentFile.writeLine("System.exit(1);")
+        self._endBlock()
+        self._endBlock()
+        # Otherwise error
+        self._beginBlock("else")
+        self.currentFile.writeLine("System.out.println(USAGE);");
+        self.currentFile.writeLine("System.exit(1);")
+        self._endBlock()
+
+        self._endBlock()
+        self.currentFile.writeNewline()
 
     ################################################################################
     # Helper Functions
