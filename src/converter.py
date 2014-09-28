@@ -120,7 +120,10 @@ class FormatLine:
         return len(self._fields) == 0
 
     def numFields(self):
-        return len(self._field)
+        return len(self._fields)
+
+    def getField( self, index ):
+        return self._fields[index]
 
     def repetitionType(self):
         return self._repetitionString
