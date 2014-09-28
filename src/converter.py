@@ -53,7 +53,7 @@ class FormatField:
         """ The parent of this object """
         return self._parent
 
-    def isClassList(self):
+    def isRepeating(self):
         return self._instanceRepetitionModeString() != ""
 
     def _instanceRepetitionModeString(self):
