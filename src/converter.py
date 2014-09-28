@@ -122,6 +122,9 @@ class FormatLine:
     def repetitionType(self):
         return self._repetitionString
 
+    def isRepeating(self):
+        return self._repetitionString == ""
+
     def isZeroOrMoreRepetition(self):
         return self._repetitionString == StringConstants.LINE_ZERO_OR_MORE
 
