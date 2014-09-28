@@ -67,6 +67,7 @@ class JavaGenerator(CodeGenerator):
         """ For generating the util file header, such as the import statements. """
         # Import library headers
         self.currentFile.writeLine("import java.util.ArrayList;")
+        self.currentFile.writeLine("import java.util.Arrays;")
         self.currentFile.writeNewline()
 
     def generateHelperFunctions(self):
@@ -105,11 +106,11 @@ class JavaGenerator(CodeGenerator):
             if didRepeat:
                 writeLine("int prevLineNumber = lineNumber[0];")
             if didRepeatPlus:
-                writeLine("boolean didRepeatOnce;")
+                writeLine("boolean didRepeatOnce = false;")
 
         def handleEmptyLine():
             # Handle the empty line case
-            self._beginBlock("if (lines[lineNumber[0]] != \"\")")
+            self._beginBlock("if (!lines[lineNumber[0]].trim().equals(\"\"))")
             writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
                 "\": Should be an empty line\");")
             self._endBlock()
@@ -126,7 +127,7 @@ class JavaGenerator(CodeGenerator):
                 # Field is primitive list, split line
                 writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
                 write("result." + field.name() + " = "
-                    + self.typeNameToParseFuncName["list(%s)" % field.typeName()] + "(fields, lineNumber);")
+                    + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber);")
                 handleListPrimitive(field, "fields")
                 writeLine("lineNumber[0] += 1;")
             else:
@@ -141,10 +142,10 @@ class JavaGenerator(CodeGenerator):
                     + self.typeNameToParseFuncName[field.typeName()]
                     + "(fields[" + str(index) + "], lineNumber);")
             elif field.isPrimitive():
-                # Field is primitive list, use rest of fields
+                # Field is primitive list, use rest of fields)
                 writeLine("result." + field.name() + " = "
-                    + self.typeNameToParseFuncName["list(%s)" % field.typeName()]
-                    + "(fields.subList(" + str(index) + ", fields.length()), lineNumber);")
+                    + self.typeNameToParseFuncName["list(%s)" % field.listType()]
+                    + "(Arrays.copyOfRange(fields, " + str(index) + ", fields.length), lineNumber);")
             else:
                 # Field is a class? Cannot be!
                 raise Exception("This should never happen.")
@@ -156,7 +157,10 @@ class JavaGenerator(CodeGenerator):
             else:
                 # Multiple fields, split it
                 writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
-                self._beginBlock("if (fields.length != " + str(line.numFields()) + ")")
+                if (line.getField(-1).isList()):
+                    self._beginBlock("if (fields.length < " + str(line.numFields() - 1) + ")")
+                else:
+                    self._beginBlock("if (fields.length != " + str(line.numFields()) + ")")
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] + " +
                     "\": Expecting " + str(line.numFields()) + " fields (\" + fields.length + \" found)\");")
                 self._endBlock()
@@ -195,30 +199,42 @@ class JavaGenerator(CodeGenerator):
                     repetitionString =  className + "." + line.repetitionAmountString()
                 self._beginBlock("for (int i = 0; i < " + repetitionString + "; i++)")
                 handleRepeatingLineForField(line.getField(0))
+                if (line.isSplitByNewline()):
+                    self._beginBlock("if (i != " + repetitionString + " - 1)")
+                    handleEmptyLine()
+                    self._endBlock()
                 self._endBlock()
             elif line.isZeroOrMoreRepetition():
+                field = line.getField(0)
                 self._beginBlock("try")
+                writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
                 self._beginBlock("while (true)")
-                handleRepeatingLineForField(line.getField(0))
+                handleRepeatingLineForField(field)
                 writeLine("prevLineNumber = lineNumber[0];")
+                if (line.isSplitByNewline()):
+                    handleEmptyLine()
                 self._endBlock()
                 self._endBlock()
                 self._beginBlock("catch (Exception e)")
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
             elif line.isOneOrMoreRepetition:
+                field = line.getField(0)
                 self._beginBlock("try")
                 writeLine("didRepeatOnce = false;")
+                writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
                 self._beginBlock("while (true)")
-                handleRepeatingLineForField(line.getField(0))
+                handleRepeatingLineForField(field)
                 writeLine("prevLineNumber = lineNumber[0];")
                 writeLine("didRepeatOnce = true;")
+                if (line.isSplitByNewline()):
+                    handleEmptyLine()
                 self._endBlock()
                 self._endBlock()
                 self._beginBlock("catch (Exception e)")
                 self._beginBlock("if (!didRepeatOnce)")
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
-                    "\": Expecting at least 1" + line.getField(0).typeName() + " (0 found)\");")
+                    "\": Expecting at least 1 " + field.typeName() + " (0 found)\");")
                 self._endBlock()
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
@@ -265,6 +281,7 @@ class JavaGenerator(CodeGenerator):
         self.currentFile.writeLine("import java.util.Scanner;")
         self.currentFile.writeLine("import java.io.File;")
         self.currentFile.writeLine("import java.io.FileNotFoundException;")
+        self.currentFile.writeLine("import java.lang.ArrayIndexOutOfBoundsException;")
         self.currentFile.writeNewline()
 
     def generateOptionVariables(self):
@@ -323,6 +340,12 @@ class JavaGenerator(CodeGenerator):
     def generateOptionParserFunction(self):
         """ For generating the function to parse command line options. """
         if len(self.format.commandLineOptions()) == 0:
+            # Just handle extraneous inputs
+            self._beginBlock("private static void " + CodeGenerator.PARSE_OPTIONS + "(String[] args)")
+            self._beginBlock("for ( int i = 0; i < args.length; i++ )")
+            self.currentFile.writeLine(CodeGenerator.USER_ARGS + ".add(args[i]);")
+            self._endBlock()
+            self._endBlock()
             return
 
         writeLine = self.currentFile.writeLine
@@ -380,14 +403,30 @@ class JavaGenerator(CodeGenerator):
 
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
+        # Begin function declaration
         self._beginBlock("private static " + self.bodyTypeName
             + " " + CodeGenerator.PARSE_INPUT + "(String[] lines)")
-        self.currentFile.writeLine("int[] lineNumber = {1};")
 
+        # Setup line number
+        self.currentFile.writeLine("int[] lineNumber = {0};")
+
+        # Main try block
         self._beginBlock("try")
-        self.currentFile.writeLine("return "
+        self.currentFile.writeLine(self.bodyTypeName + " result = "
             + CodeGenerator.UTIL_FILE_NAME + ".parse" + self.bodyTypeName + "(lines, lineNumber);")
+        self._beginBlock("if (lineNumber[0] != lines.length)")
+        self.currentFile.writeLine("throw new RuntimeException(\"Parser Error: Did not reach end of file\");")
         self._endBlock()
+        self.currentFile.writeLine("return result;")
+        self._endBlock()
+
+        # Begin catch array out of bounds
+        self._beginBlock("catch (ArrayIndexOutOfBoundsException e)")
+        self.currentFile.writeLine("System.out.println(\"Parser Error: Reached end of file before finished parsing\");")
+        self.currentFile.writeLine("System.exit(1);")
+        self._endBlock()
+
+        # Begin other exception catches
         self._beginBlock("catch (Exception e)")
         self.currentFile.writeLine("System.out.println(e.getMessage());")
         self.currentFile.writeLine("System.exit(1);")
@@ -395,6 +434,7 @@ class JavaGenerator(CodeGenerator):
 
         self.currentFile.writeLine("return null;")
 
+        # End function declaration
         self._endBlock()
 
     def generateRunFunction(self):
@@ -418,6 +458,9 @@ class JavaGenerator(CodeGenerator):
         writeLine("list.add(s.nextLine());")
         self._endBlock()
         writeLine("s.close();")
+        self._beginBlock("while (list.get(list.size() - 1) == \"\")")
+        self.currentFile.writeLine("list.remove(list.size() - 1);")
+        self._endBlock()
         writeLine("String[] inputLines = list.toArray(new String[list.size()]);")
         writeLine("return " + CodeGenerator.PARSE_INPUT + "(inputLines);")
         self._endBlock()
