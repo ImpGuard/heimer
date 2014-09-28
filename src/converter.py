@@ -147,7 +147,7 @@ class FormatLine:
 
     def isVariableRepetition(self):
         return ( not self.isZeroOrMoreRepetition() and
-            not self.isONEOrMoreRepetition() and
+            not self.isOneOrMoreRepetition() and
             not self.isIntegerRepetition() )
 
     def isSplitByNewline(self):
