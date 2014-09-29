@@ -128,7 +128,6 @@ class JavaGenerator(CodeGenerator):
                 writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
                 write("result." + field.name() + " = "
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber);")
-                handleListPrimitive(field, "fields")
                 writeLine("lineNumber[0] += 1;")
             else:
                 # Field is a class, recurse
@@ -180,8 +179,7 @@ class JavaGenerator(CodeGenerator):
                 # Field is primitive list, split line
                 writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
                 writeLine("result." + field.name() + ".add("
-                    + self.typeNameToParseFuncName["list(%s)" % field.typeName()] + "(fields, lineNumber));")
-                handleListPrimitive(field, "fields")
+                    + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber));")
                 writeLine("lineNumber[0] += 1;")
             else:
                 # Field is a class, recurse
@@ -192,45 +190,67 @@ class JavaGenerator(CodeGenerator):
             # Must be a primitive or class repeated
             if line.isIntegerRepetition() or line.isVariableRepetition():
                 # Constant repetition amount
+                field = line.getField(0)
+                # Generate the repetition string
                 repetitionString = ""
                 if line.isIntegerRepetition():
                     repetitionString = str(line.repetitionAmountString())
                 else:
-                    repetitionString =  className + "." + line.repetitionAmountString()
+                    repetitionString =  "result." + line.repetitionAmountString()
+                # Initialize the arraylist
+                writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
+                # Begin loop
                 self._beginBlock("for (int i = 0; i < " + repetitionString + "; i++)")
-                handleRepeatingLineForField(line.getField(0))
+                # Main handler
+                handleRepeatingLineForField(field)
+                # Check for newline
                 if (line.isSplitByNewline()):
                     self._beginBlock("if (i != " + repetitionString + " - 1)")
                     handleEmptyLine()
                     self._endBlock()
+                # End loop
                 self._endBlock()
             elif line.isZeroOrMoreRepetition():
                 field = line.getField(0)
+                # Wrap with try block
                 self._beginBlock("try")
+                # Initialize object
                 writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
+                # Begin infinite loop
                 self._beginBlock("while (true)")
+                # Main handler
                 handleRepeatingLineForField(field)
                 writeLine("prevLineNumber = lineNumber[0];")
+                # Check for newline
                 if (line.isSplitByNewline()):
                     handleEmptyLine()
+                # End infinite loop and try block
                 self._endBlock()
                 self._endBlock()
+                # Catch any errors, reset line number and continue
                 self._beginBlock("catch (Exception e)")
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
             elif line.isOneOrMoreRepetition:
                 field = line.getField(0)
+                # Wrap with try block
                 self._beginBlock("try")
+                # Initialize object and checker to ensure at least one repetition
                 writeLine("didRepeatOnce = false;")
                 writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
+                # Begin infinite loop
                 self._beginBlock("while (true)")
+                # Main handler
                 handleRepeatingLineForField(field)
                 writeLine("prevLineNumber = lineNumber[0];")
                 writeLine("didRepeatOnce = true;")
+                # Check for newline
                 if (line.isSplitByNewline()):
                     handleEmptyLine()
+                # End infinite loop and try block
                 self._endBlock()
                 self._endBlock()
+                # Catch any errors, either (1) reset line number and continue (2) error if did not repeat once
                 self._beginBlock("catch (Exception e)")
                 self._beginBlock("if (!didRepeatOnce)")
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
@@ -245,6 +265,7 @@ class JavaGenerator(CodeGenerator):
         self._beginBlock("public static " + className + " parse" + className + "(String[] lines, int[] lineNumber)")
         generateSetup()
 
+        # Handle the three different cases, helpers are inner functions defined above
         for line in lines:
             if line.isEmpty():
                 handleEmptyLine()
