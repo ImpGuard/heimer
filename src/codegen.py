@@ -1,5 +1,6 @@
 """ Base class for generating the parser code. Subclass this for every language supported by Heimer. """
 from util import HeimerFile, StringConstants
+from os.path import dirname, basename, join
 
 class CodeGenerator:
 
@@ -26,10 +27,11 @@ class CodeGenerator:
     RUN = "run"
 
     def __init__( self, filename, format ):
+        self.foldername = dirname(filename)
+        self.filename = basename(filename)
         self.output = HeimerFile(filename)
-        # FIX ME (same folder as filename)
-        self.util = HeimerFile(CodeGenerator.UTIL_FILE_NAME)
-        self.data = HeimerFile(CodeGenerator.DATA_FILE_NAME)
+        self.util = HeimerFile(join(self.foldername, CodeGenerator.UTIL_FILE_NAME))
+        self.data = HeimerFile(join(self.foldername, CodeGenerator.DATA_FILE_NAME))
         self.format = format
         self.classes = format.classes()
         self.bodyTypeName = format.bodyTypeName()

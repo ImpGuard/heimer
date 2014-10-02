@@ -32,7 +32,7 @@ class JavaGenerator(CodeGenerator):
         data structure). The first argument is the class name and the second argument is a list of
         fields (in order) of that class. """
         self.typeNameToParseFuncName[className] = "parse%s" % className
-        classFile = HeimerFile(className + ".java")
+        classFile = HeimerFile(os.path.join(self.foldername, className + ".java"))
         self.classFiles.append(classFile)
         self.currentFile = classFile
 
