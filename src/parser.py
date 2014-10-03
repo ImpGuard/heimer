@@ -223,7 +223,7 @@ class HeimerFormatFileParser:
     def failureString(self):
         msg = ""
         for failureMessage in self.failureMessages:
-            msg += failureMessage, "\n"
+            msg += failureMessage + "\n"
         return msg
 
     def parseFailed(self):
