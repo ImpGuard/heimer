@@ -7,7 +7,7 @@ def intParse( s, currentLineNumber ):
 \ttry:
 \t\treturn int(s)
 \texcept ValueError as e:
-\t\traise Exception("Parser Error on line %d: Cannot parse %s as int." % ( currentLineNumber, s ))
+\t\traise ValueError("Parser Error on line %d: Cannot parse '%s' as int." % ( currentLineNumber, s ))
 
 def boolParse( s, currentLineNumber ):
 \ttrueStrings = ["1", "true", "True"]
@@ -17,7 +17,7 @@ def boolParse( s, currentLineNumber ):
 \telif s in falseStrings:
 \t\treturn False
 \telse:
-\t\traise Exception("Parser Error on line %d: Cannot parse %s as bool, it must either be '1', '0', \
+\t\traise ValueError("Parser Error on line %d: Cannot parse '%s' as bool, it must either be '1', '0', \
     'true', 'True', 'false' or 'False'." % ( currentLineNumber, s ))
 
 def stringParse( s, currentLineNumber ):
@@ -27,7 +27,7 @@ def floatParse( s, currentLineNumber ):
 \ttry:
 \t\treturn float(s)
 \texcept ValueError as e:
-\t\traise Exception("Parser Error on line %d: Cannot parse %s as float." % ( currentLineNumber, s ))
+\t\traise ValueError("Parser Error on line %d: Cannot parse '%s' as float." % ( currentLineNumber, s ))
 
 def intListParse( strings, currentLineNumber ):
 \tintList = []

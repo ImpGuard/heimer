@@ -1,6 +1,6 @@
 from parser import HeimerFormatFileParser
 from converter import HeimerFormat
-# from pygen import PythonGenerator
+from pygen import PythonGenerator
 from javagen import JavaGenerator
 # from cgen import CGenerator
 
