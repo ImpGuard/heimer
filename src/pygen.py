@@ -206,7 +206,9 @@ class PythonGenerator(CodeGenerator):
                     self.writeLine("lineNumber += 1")
                 self.writeLine("userClass.%s.append(retObj)" % field.name())
                 if line.isSplitByNewline():
+                    self.beginBlock("if _index + 1 < %s:" % numRepetition)
                     handleEmptyLine()
+                    self.endBlock()
                 self.endBlock()
                 self.endBlock()
 
@@ -300,17 +302,18 @@ class PythonGenerator(CodeGenerator):
         self.writeLine("body, lineNumber = %s.%s( lines, 0 )" % ( CodeGenerator.UTIL_FILE_NAME, \
             self.typeNameToParseFuncName[self.bodyTypeName] ))
         self.beginBlock("if lineNumber < len(lines):")
-        self.writeLine("print 'Parser Error on line %d: Did not reach end of file.' % lineNumber")
+        self.writeLine("sys.stderr.write('Parser Error on line %d: Did not reach end of file.' % lineNumber)")
+        self.writeLine("exit(1)")
         self.writeLine("return None")
         self.endBlock()
         self.writeLine("return body")
         self.endBlock()
 
         self.beginBlock("except ValueError as e:")
-        self.writeLine("print e")
+        self.writeLine("sys.stderr.write(e)")
         self.endBlock()
         self.beginBlock("except IndexError as e:")
-        self.writeLine("print 'Parser Error: Reached end of file before finished parsing.'")
+        self.writeLine("sys.stderr.write('Parser Error: Reached end of file before finished parsing.')")
         self.endBlock()
 
         self.endBlock()
@@ -322,17 +325,20 @@ class PythonGenerator(CodeGenerator):
         self.writeLine("%s(commandLineArguments[1:])" % CodeGenerator.PARSE_OPTIONS)
         self.beginBlock("try:")
         self.beginBlock("if len(%s) == 0:" % CodeGenerator.USER_ARGS)
-        self.writeLine("raise IndexError('Require format file name.')")
+        self.writeLine("sys.stderr.write('Parser Error: Require input file name.')")
+        self.writeLine("exit(1)")
         self.endBlock()
         self.writeLine("filename = %s[0]" % CodeGenerator.USER_ARGS)
         self.writeLine("inputFile = open(filename, 'r')" )
         self.writeLine("return %s(inputFile)" % CodeGenerator.PARSE_INPUT)
         self.endBlock()
         self.beginBlock("except IOError as e:")
-        self.writeLine("print 'Parser Error: Problem opening file, %s' % e" )
+        self.writeLine("sys.stderr.write('Parser Error: Problem opening file, %s' % e)" )
+        self.writeLine("exit(1)")
         self.endBlock()
         self.beginBlock("except Exception as e:")
-        self.writeLine("print 'Parser Error: %s' % e")
+        self.writeLine("sys.stderr.write('Parser Error: %s' % e)")
+        self.writeLine("exit(1)")
         self.endBlock()
 
         self.endBlock()
@@ -341,6 +347,6 @@ class PythonGenerator(CodeGenerator):
     def generateMainFunction(self):
         """ For generating the empty main method that the user can fill in. """
         self.beginBlock("if __name__ == '__main__':")
-        self.writeLine("parsedInputs = %s(sys.argv)" % CodeGenerator.RUN)
+        self.writeLine("body = %s(sys.argv)" % CodeGenerator.RUN)
         self.endBlock()
 
