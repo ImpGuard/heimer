@@ -1,7 +1,7 @@
 .PHONY: check, clean
 
 check:
-	@cd src; nosetests ../test
+	nosetests --no-byte-compile
 
 clean:
 	@rm -rf test/*.pyc src/*.pyc out

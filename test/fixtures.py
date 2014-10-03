@@ -1,14 +1,18 @@
-from javagen import JavaGenerator
+from src.javagen import JavaGenerator
+from src.parser import HeimerFormatFileParser
+from src.converter import HeimerFormat
+
+from nose.tools import assert_true, assert_false
 from subprocess import Popen, PIPE
 from os import chdir, getcwd
 from os.path import dirname, basename, join
 from shutil import rmtree
-from nose.tools import assert_true, assert_false
 import difflib
 
 class GeneratorFixture:
 
-    filename = "test/Main"
+    testDir = "test_tmp"
+    filename = join(testDir, "Main")
 
     """
     Initialize a generator fixture by passing it the generator that it is testing,
@@ -43,19 +47,19 @@ class GeneratorFixture:
         self.mainFileBasename = basename(self.mainFileName)
         self.tests = tests
 
-    def runShellCommand(command):
+    def runShellCommand( self, command ):
         pipe = Popen( command, stdout=PIPE )
         return pipe.communicate()[0]
 
     """ A function that can be run to compile the generated code. """
-    def compile():
+    def compile(self):
         raise NotImplementedError()
     """
     A function that can be run to run the compiled code. It accepts one argument,
     an input file name, and should run the compiled code with the input file name
     as its input and return any output printed to standard out.
     """
-    def run(inputFileName):
+    def run( self, inputFileName ):
         raise NotImplementedError()
 
     def insertMainFunction( self, generator, mainFunctionFileName ):
@@ -73,8 +77,8 @@ class GeneratorFixture:
         formatObject = HeimerFormat(parser.objectModel)
         return self.generatorType( self.mainFileName, formatObject )
 
-    def runAllTests(self):
-        for shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName in self.tests:
+    def generateTests(self):
+        def test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName):
             failed = False
             generator = self.createGenerator(formatFileName)
             self.insertMainFunction( generator, mainFunctionFileName )
@@ -87,25 +91,27 @@ class GeneratorFixture:
                 if s[0] == "+" or s[0] == "-":
                     failed = True
             solutionFile.close()
+            shutil.rmtree(GeneratorFixture.testDir)
             if shouldPass:
-                yield ( assert_false, failed )
+                return not failed
             else:
-                yield ( assert_true, failed )
+                return failed
 
-        shutil.rmtree('test')
+        for shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName in self.tests:
+            yield test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName)
 
 class JavaFixture(GeneratorFixture):
 
     def __init__( self, tests ):
         GeneratorFixture.__init__( self, JavaGenerator, "java", tests)
 
-    def compile():
+    def compile(self):
         prevWD = getcwd()
         chdir(self.mainFileDirname)
         runCommand([ "javac", self.mainFileBasename ])
         chdir(prevWD)
 
-    def run(inputFileName):
+    def run( self, inputFileName ):
         prevWD = getcwd()
         chdir(self.mainFileDirname)
         output = runCommand([ "java", self.mainFileBasename[:-5], inputFileName ])
@@ -113,7 +119,7 @@ class JavaFixture(GeneratorFixture):
         return output
 
 def getTest( shouldPass, testName, extension ):
-    testDir = join( "..", "test", "tests" )
+    testDir = join( "tests" )
     if shouldPass:
         testDir = join( testDir, "pass" )
     else:
