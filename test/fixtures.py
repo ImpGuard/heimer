@@ -193,7 +193,7 @@ class JavaFixture(GeneratorFixture):
     def run( self, inputFileName ):
         prevWD = getcwd()
         chdir(self.mainFileDirname)
-        out, err, rc = runShellCommand([ "java", self.mainFileBasename[:-5], join( g"..", inputFileName ) ])
+        out, err, rc = runShellCommand([ "java", self.mainFileBasename[:-5], join( "..", inputFileName ) ])
         chdir(prevWD)
         return out, err, rc == 0
 
