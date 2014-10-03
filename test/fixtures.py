@@ -40,17 +40,25 @@ def teardownTest():
 def setupTest():
     mkdir(GeneratorFixture.testDir)
 
+def printTest(testTuple):
+    return str(testTuple)
+
+
 @with_setup(setupTest, teardownTest)
 def checkTest(test):
-    opcode, val = test()
+    opcode, testTuple, val = test()
     if opcode == 1:
-        assert False, "Output does not match solution\n\n" + val
+        assert False, "Output does not match solution\n" \
+            "for " + printTest(testTuple) + "\n\n" + val
     elif opcode == 2:
-        assert False, "Format File Error\n\n" + val
+        assert False, "Format File Error\n" \
+            "for " + printTest(testTuple) + "\n\n" + val
     elif opcode == 3:
-        assert False, "Compilation Error\n\n" + val
+        assert False, "Compilation Error\n" \
+            "for " + printTest(testTuple) + "\n\n" + val
     elif opcode == 4:
-        assert False, "Runtime Error\n\n" + val
+        assert False, "Runtime Error\n" \
+            "for " + printTest(testTuple) + "\n\n" + val
 
 class GeneratorFixture:
 
@@ -122,27 +130,34 @@ class GeneratorFixture:
             return e.message, None
 
     """
-    Creates a generator for all the tests this fixture is testing. Each test will run on the
-    provided input files and return a tuple indicating success or failure. The different tuple
-    types are:
-        (0, None) - Test succeeded
-        (1, Diff) - Test failed, diff is the associated diff output between the solution and the
-            generated output
-        (2, ErrorMsg) - Error parsing format file, ErrorMsg is the parsing error message
-        (3, ErrorMsg) - Error compiling generated code, ErrorMsg is the compilation error message
-        (4, ErrorMsg) - Error running generated code, ErrorMsg is the runtime error message
+    Creates a generator for all the tests this fixture is testing. Each test will
+    run on the provided input files and return a tuple indicating success or failure.
+    Every tuple contains another tuple named Test that holds all the different test
+    filenames tested.
+
+    The different tuple types are:
+        (0, Test, None) - Test succeeded
+        (1, Test, Diff) - Test failed, diff is the associated diff output between the
+            solution and the generated output
+        (2, Test, ErrorMsg) - Error parsing format file, ErrorMsg is the parsing error
+            message
+        (3, Test, ErrorMsg) - Error compiling generated code, ErrorMsg is the compilation
+            error message
+        (4, Test, ErrorMsg) - Error running generated code, ErrorMsg is the runtime error
+            message
     """
     def generateTests(self):
         def test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName):
+            testTuple = (formatFileName, mainFunctionFileName, inputFileName, solutionFileName)
             failed = False
             diff = ""
             # Create generator and insert main function
             err, generator = self.createGenerator(formatFileName)
             if not generator:
                 if shouldPass:
-                    return (2, err)
+                    return (2, testTuple, err)
                 else:
-                    return (1, None)
+                    return (1, testTuple, None)
             self.insertMainFunction( generator, mainFunctionFileName )
             # Generate code
             generator.codeGen()
@@ -150,16 +165,16 @@ class GeneratorFixture:
             out, err, success = self.compile()
             if not success:
                 if shouldPass:
-                    return (3, err)
+                    return (3, testTuple, err)
                 else:
-                    return (1, None)
+                    return (1, testTuple, None)
             # Run generated code
             out, err, success = self.run(inputFileName)
             if not success:
                 if shouldPass:
-                    return (4, err)
+                    return (4, testTuple, err)
                 else:
-                    return (1, None)
+                    return (1, testTuple, None)
             out = out.splitlines()
             # Check output to solution
             solutionFile = open( solutionFileName, "r" )
@@ -171,9 +186,9 @@ class GeneratorFixture:
             solutionFile.close()
             # Return success or failure
             if (shouldPass and not failed) or (not shouldPass and failed):
-                return (0, None)
+                return (0, testTuple, None)
             else:
-                return (1, diff)
+                return (1, testTuple, diff)
 
         for shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName in self.tests:
             yield lambda: test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName)
