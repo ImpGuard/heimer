@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     # Parser format file into a object model
     parser = HeimerFormatFileParser(args[0])
-    if len(parser.failureMessages) > 0:
+    if parser.parseFailed():
         parser.printFailures()
         sys.exit(1)
 

@@ -220,6 +220,15 @@ class HeimerFormatFileParser:
             failureMessage += "\n    at line " + str(lineMarker + 1) +  ":\t\"" + self.formatInputAsLines[lineMarker] + "\""
         self.failureMessages.append(failureMessage)
 
+    def failureString(self):
+        msg = ""
+        for failureMessage in self.failureMessages:
+            msg += failureMessage, "\n"
+        return msg
+
+    def parseFailed(self):
+        return len(self.failureMessages) > 0
+
     def nextTagLocationFromLineMarker( self, marker ):
         while marker < len(self.formatInputAsLines):
             currentStrippedLine = ParserUtil.stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[marker])

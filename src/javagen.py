@@ -408,13 +408,13 @@ class JavaGenerator(CodeGenerator):
 
         # Catch block
         self._beginBlock("catch (NumberFormatException e)")
-        self.output.writeLine("System.out.println(USAGE);")
+        self.output.writeLine("System.err.println(USAGE);")
         self.output.writeLine("System.exit(1);")
         self._endBlock()
 
         # generate code for returning the filename
         self._beginBlock("if (" + CodeGenerator.USER_ARGS + ".size() == 0)")
-        writeLine("System.out.println(USAGE);")
+        writeLine("System.err.println(USAGE);")
         writeLine("System.exit(1);")
         self._endBlock()
 
@@ -443,13 +443,13 @@ class JavaGenerator(CodeGenerator):
 
         # Begin catch array out of bounds
         self._beginBlock("catch (ArrayIndexOutOfBoundsException e)")
-        self.currentFile.writeLine("System.out.println(\"Parser Error: Reached end of file before finished parsing\");")
+        self.currentFile.writeLine("System.err.println(\"Parser Error: Reached end of file before finished parsing\");")
         self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
 
         # Begin other exception catches
         self._beginBlock("catch (Exception e)")
-        self.currentFile.writeLine("System.out.println(e.getMessage());")
+        self.currentFile.writeLine("System.err.println(e.getMessage());")
         self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
 
@@ -479,7 +479,7 @@ class JavaGenerator(CodeGenerator):
         writeLine("list.add(s.nextLine());")
         self._endBlock()
         writeLine("s.close();")
-        self._beginBlock("while (list.get(list.size() - 1) == \"\")")
+        self._beginBlock("while (list.get(list.size() - 1).equals(\"\"))")
         self.currentFile.writeLine("list.remove(list.size() - 1);")
         self._endBlock()
         writeLine("String[] inputLines = list.toArray(new String[list.size()]);")
@@ -487,13 +487,13 @@ class JavaGenerator(CodeGenerator):
         self._endBlock()
         # File not found!
         self._beginBlock("catch (FileNotFoundException e)")
-        self.currentFile.writeLine("System.out.println(\"Input file '\" + filename + \"' not found.\");")
+        self.currentFile.writeLine("System.err.println(\"Input file '\" + filename + \"' not found.\");")
         self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
         self._endBlock()
         # Otherwise error
         self._beginBlock("else")
-        self.currentFile.writeLine("System.out.println(USAGE);");
+        self.currentFile.writeLine("System.err.println(USAGE);");
         self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
 

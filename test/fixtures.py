@@ -4,10 +4,40 @@ from src.converter import HeimerFormat
 
 from nose.tools import assert_true, assert_false
 from subprocess import Popen, PIPE
-from os import chdir, getcwd
+from os import chdir, getcwd, mkdir
 from os.path import dirname, basename, join
 from shutil import rmtree
 import difflib
+import types
+
+"""
+Runs an arbitrary shell command and returns a tuple containing
+the STDOUT-output, STDERR-output, and the return code.
+"""
+def runShellCommand(command):
+    pipe = Popen( command, stdout=PIPE, stderr=PIPE )
+    out, err = pipe.communicate()
+    return out, err, pipe.returncode
+
+def getTest( shouldPass, testName, extension ):
+    testsDirectory = join( "test", "tests" )
+    if shouldPass:
+        testsDirectory = join( testsDirectory, "pass" )
+    else:
+        testsDirectory = join( testsDirectory, "fail" )
+    return (
+        shouldPass,
+        join( testsDirectory, testName + ".format" ),
+        join( testsDirectory, testName + "." + extension ),
+        join( testsDirectory, testName + ".input" ),
+        join( testsDirectory, testName + ".sln" )
+        )
+
+def teardownTest():
+    rmtree(GeneratorFixture.testDir)
+
+def setupTest():
+    mkdir(GeneratorFixture.testDir)
 
 class GeneratorFixture:
 
@@ -47,18 +77,14 @@ class GeneratorFixture:
         self.mainFileBasename = basename(self.mainFileName)
         self.tests = tests
 
-    def runShellCommand( self, command ):
-        pipe = Popen( command, stdout=PIPE )
-        return pipe.communicate()[0]
-
-    """ A function that can be run to compile the generated code. """
+    """
+    Functions that wrap the command line calls to compile and run the generated code
+    on the file with the associated input filename. Both functions return any output
+    associated with the compilation or run from STDOUT and STDERROR as well as the
+    return code for the command line call.
+    """
     def compile(self):
         raise NotImplementedError()
-    """
-    A function that can be run to run the compiled code. It accepts one argument,
-    an input file name, and should run the compiled code with the input file name
-    as its input and return any output printed to standard out.
-    """
     def run( self, inputFileName ):
         raise NotImplementedError()
 
@@ -67,38 +93,81 @@ class GeneratorFixture:
             mainFile = open( mainFunctionFileName, "r" )
             for line in mainFile:
                 self.output.writeLine(line)
-            self.output.writeNewLine()
+            self.output.writeNewline()
             mainFile.close()
 
-        generator.generateMainFunction = insertedMainFunction
+        generator.generateMainFunction = types.MethodType(insertedMainFunction, generator, self.generatorType)
 
     def createGenerator( self, formatFileName ):
         parser = HeimerFormatFileParser(formatFileName)
-        formatObject = HeimerFormat(parser.objectModel)
-        return self.generatorType( self.mainFileName, formatObject )
+        if parser.parseFailed():
+            return failureString, None
+        try:
+            formatObject = HeimerFormat(parser.objectModel)
+            return None, self.generatorType( self.mainFileName, formatObject )
+        except ValueError as e:
+            return e.message, None
 
+    """
+    Creates a generator for all the tests this fixture is testing. Each test will run on the
+    provided input files and return a tuple indicating success or failure. The different tuple
+    types are:
+        (0, None) - Test succeeded
+        (1, Diff) - Test failed, diff is the associated diff output between the solution and the
+            generated output
+        (2, ErrorMsg) - Error parsing format file, ErrorMsg is the parsing error message
+        (3, ErrorMsg) - Error compiling generated code, ErrorMsg is the compilation error message
+        (4, ErrorMsg) - Error running generated code, ErrorMsg is the runtime error message
+    """
     def generateTests(self):
         def test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName):
             failed = False
-            generator = self.createGenerator(formatFileName)
+            diff = ""
+            # Create generator and insert main function
+            err, generator = self.createGenerator(formatFileName)
+            if not generator:
+                if shouldPass:
+                    return (2, err)
+                else:
+                    return (1, None)
             self.insertMainFunction( generator, mainFunctionFileName )
+            # Generate code
             generator.codeGen()
-            self.compile()
-            output = self.run(inputFile).splitlines()
+            # Compile generated code
+            out, err, success = self.compile()
+            if not success:
+                if shouldPass:
+                    return (3, err)
+                else:
+                    return (1, None)
+            # Run generated code
+            out, err, success = self.run(inputFileName)
+            if not success:
+                if shouldPass:
+                    return (4, err)
+                else:
+                    return (1, None)
+            out = out.splitlines()
+            # Check output to solution
             solutionFile = open( solutionFileName, "r" )
+            tmp = []
+            for line in solutionFile:
+                tmp.append(line)
+            print tmp
             solution = solutionFile.readlines()
-            for s in difflib.ndiff( output, solution ):
+            for s in difflib.ndiff( out, solution ):
+                diff += s + "\n"
                 if s[0] == "+" or s[0] == "-":
                     failed = True
             solutionFile.close()
-            shutil.rmtree(GeneratorFixture.testDir)
-            if shouldPass:
-                return not failed
+            # Return success or failure
+            if (shouldPass and not failed) or (not shouldPass and failed):
+                return (0, None)
             else:
-                return failed
+                return (1, diff)
 
         for shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName in self.tests:
-            yield test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName)
+            yield lambda: test(shouldPass, formatFileName, mainFunctionFileName, inputFileName, solutionFileName)
 
 class JavaFixture(GeneratorFixture):
 
@@ -108,26 +177,13 @@ class JavaFixture(GeneratorFixture):
     def compile(self):
         prevWD = getcwd()
         chdir(self.mainFileDirname)
-        runCommand([ "javac", self.mainFileBasename ])
+        out, err, rc = runShellCommand([ "javac", self.mainFileBasename ])
         chdir(prevWD)
+        return out, err, rc == 0
 
     def run( self, inputFileName ):
         prevWD = getcwd()
         chdir(self.mainFileDirname)
-        output = runCommand([ "java", self.mainFileBasename[:-5], inputFileName ])
+        out, err, rc = runShellCommand([ "java", self.mainFileBasename[:-5], join("..", inputFileName) ])
         chdir(prevWD)
-        return output
-
-def getTest( shouldPass, testName, extension ):
-    testDir = join( "tests" )
-    if shouldPass:
-        testDir = join( testDir, "pass" )
-    else:
-        testDir = join( testDir, "fail" )
-    return (
-        shouldPass,
-        join( testDir, testName + ".format" ),
-        join( testDir, testName + "." + extension ),
-        join( testDir, testName + ".input" ),
-        join( testDir, testName + ".sln" )
-        )
+        return out, err, rc == 0
