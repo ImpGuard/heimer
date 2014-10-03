@@ -40,12 +40,11 @@ def teardownTest():
 def setupTest():
     mkdir(GeneratorFixture.testDir)
 
-<<<<<<< HEAD
 def printTest(testTuple):
     return str(testTuple)
 
 
-@with_setup(setupTest)
+@with_setup(setupTest, teardownTest)
 def checkTest(test):
     opcode, testTuple, val = test()
     if opcode == 1:
@@ -60,7 +59,7 @@ def checkTest(test):
     elif opcode == 4:
         assert False, "Runtime Error\n" \
             "for " + printTest(testTuple) + "\n\n" + val
-    teardownTest()
+    
 
 class GeneratorFixture:
 
