@@ -1,8 +1,9 @@
 from src.javagen import JavaGenerator
+from src.pygen import PythonGenerator
 from src.parser import HeimerFormatFileParser
 from src.converter import HeimerFormat
 
-from nose.tools import assert_true, assert_false
+from nose.tools import with_setup
 from subprocess import Popen, PIPE
 from os import chdir, getcwd, mkdir
 from os.path import dirname, basename, join
@@ -38,6 +39,18 @@ def teardownTest():
 
 def setupTest():
     mkdir(GeneratorFixture.testDir)
+
+@with_setup(setupTest, teardownTest)
+def checkTest(test):
+    opcode, val = test()
+    if opcode == 1:
+        assert False, "Output does not match solution\n\n" + val
+    elif opcode == 2:
+        assert False, "Format File Error\n\n" + val
+    elif opcode == 3:
+        assert False, "Compilation Error\n\n" + val
+    elif opcode == 4:
+        assert False, "Runtime Error\n\n" + val
 
 class GeneratorFixture:
 
@@ -150,11 +163,7 @@ class GeneratorFixture:
             out = out.splitlines()
             # Check output to solution
             solutionFile = open( solutionFileName, "r" )
-            tmp = []
-            for line in solutionFile:
-                tmp.append(line)
-            print tmp
-            solution = solutionFile.readlines()
+            solution = "".join(solutionFile.readlines()).splitlines()
             for s in difflib.ndiff( out, solution ):
                 diff += s + "\n"
                 if s[0] == "+" or s[0] == "-":
@@ -184,6 +193,22 @@ class JavaFixture(GeneratorFixture):
     def run( self, inputFileName ):
         prevWD = getcwd()
         chdir(self.mainFileDirname)
-        out, err, rc = runShellCommand([ "java", self.mainFileBasename[:-5], join("..", inputFileName) ])
+        out, err, rc = runShellCommand([ "java", self.mainFileBasename[:-5], join( "..", inputFileName ) ])
         chdir(prevWD)
         return out, err, rc == 0
+
+class PythonFixture(GeneratorFixture):
+
+    def __init__( self, tests ):
+        GeneratorFixture.__init__( self, PythonGenerator, "py", tests)
+
+    def compile(self):
+        return "", "", True
+
+    def run( self, inputFileName ):
+        prevWD = getcwd()
+        chdir(self.mainFileDirname)
+        out, err, rc = runShellCommand([ "python", self.mainFileBasename, join( "..", inputFileName ) ])
+        chdir(prevWD)
+        return out, err, rc == 0
+

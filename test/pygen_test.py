@@ -4,11 +4,11 @@ from nose.tools import *
 import sys
 
 tests = [
-    getTest(True, "image", "java")
+    getTest(True, "image", "py")
 ]
 
-def testJavaGen():
-    fixture = JavaFixture(tests)
+def testPyGen():
+    fixture = PythonFixture(tests)
     testGenerator = fixture.generateTests()
     for test in testGenerator:
         yield checkTest, test
