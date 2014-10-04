@@ -487,7 +487,7 @@ class JavaGenerator(CodeGenerator):
         self._endBlock()
         # File not found!
         self._beginBlock("catch (FileNotFoundException e)")
-        self.currentFile.writeLine("System.err.println(\"Input file '\" + filename + \"' not found.\");")
+        self.currentFile.writeLine("System.err.println(\"Input file '\" + filename + \"' not found\");")
         self.currentFile.writeLine("System.exit(1);")
         self._endBlock()
         self._endBlock()

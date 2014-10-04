@@ -43,23 +43,21 @@ def setupTest():
 def printTest(testTuple):
     return str(testTuple)
 
-
 @with_setup(setupTest, teardownTest)
 def checkTest(test):
     opcode, testTuple, val = test()
     if opcode == 1:
         assert False, "Output does not match solution\n" \
-            "for " + printTest(testTuple) + "\n\n" + val
+            "for " + printTest(testTuple) + "\n\n" + ("" if not val else val)
     elif opcode == 2:
         assert False, "Format File Error\n" \
-            "for " + printTest(testTuple) + "\n\n" + val
+            "for " + printTest(testTuple) + "\n\n" + ("" if not val else val)
     elif opcode == 3:
         assert False, "Compilation Error\n" \
-            "for " + printTest(testTuple) + "\n\n" + val
+            "for " + printTest(testTuple) + "\n\n" + ("" if not val else val)
     elif opcode == 4:
         assert False, "Runtime Error\n" \
-            "for " + printTest(testTuple) + "\n\n" + val
-    
+            "for " + printTest(testTuple) + "\n\n" + ("" if not val else val)
 
 class GeneratorFixture:
 
