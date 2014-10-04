@@ -156,7 +156,7 @@ class GeneratorFixture:
                 if shouldPass:
                     return (2, testTuple, err)
                 else:
-                    return (1, testTuple, None)
+                    return (0, testTuple, None)
             self.insertMainFunction( generator, mainFunctionFileName )
             # Generate code
             generator.codeGen()
@@ -166,14 +166,14 @@ class GeneratorFixture:
                 if shouldPass:
                     return (3, testTuple, err)
                 else:
-                    return (1, testTuple, None)
+                    return (0, testTuple, None)
             # Run generated code
             out, err, success = self.run(inputFileName)
             if not success:
                 if shouldPass:
                     return (4, testTuple, err)
                 else:
-                    return (1, testTuple, None)
+                    return (0, testTuple, None)
             out = out.splitlines()
             # Check output to solution
             solutionFile = open( solutionFileName, "r" )
