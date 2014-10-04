@@ -2,6 +2,9 @@ test = nosetests --stop
 
 .PHONY: check, checkpython, checkjava, clean
 
+all:
+	@echo Compilation unimplemented
+
 check:
 	@$(test)
 
