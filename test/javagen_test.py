@@ -1,10 +1,8 @@
 from fixtures import *
 from nose.tools import *
 
-import sys
-
 tests = [
-    getTest(True, "image", "java")
+    getTestByName(0, "image", "java")
 ]
 
 def testJavaGen():

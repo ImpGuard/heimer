@@ -4,11 +4,11 @@ from nose.tools import *
 import sys, os
 
 tests = [
-    getTest(True, "image", "py"),
-    (True, os.path.join("test/tests/pass/", "Vector.format"), os.path.join("test/tests/pass/", "Vector_pass.py"), os.path.join("test/tests/pass/", "Vector_pass1.input"), os.path.join("test/tests/pass/", "Vector_pass1.sln")),
-    (True, os.path.join("test/tests/pass/", "Vector.format"), os.path.join("test/tests/pass/", "Vector_pass.py"), os.path.join("test/tests/pass/", "Vector_pass2.input"), os.path.join("test/tests/pass/", "Vector_pass2.sln")),
-    (True, os.path.join("test/tests/pass/", "Vector.format"), os.path.join("test/tests/pass/", "Vector_pass.py"), os.path.join("test/tests/pass/", "Vector_pass3.input"), os.path.join("test/tests/pass/", "Vector_pass3.sln")),
-    (True, os.path.join("test/tests/pass/", "Vector.format"), os.path.join("test/tests/pass/", "Vector_pass.py"), os.path.join("test/tests/pass/", "Vector_pass4.input"), os.path.join("test/tests/pass/", "Vector_pass4.sln"))
+    getTestByName(0, "image", "py"),
+    getTest(0, "Vector.format", "Vector_pass.py", "Vector_pass1.input", "Vector_pass1.sln"),
+    getTest(0, "Vector.format", "Vector_pass.py", "Vector_pass2.input", "Vector_pass2.sln"),
+    getTest(0, "Vector.format", "Vector_pass.py", "Vector_pass3.input", "Vector_pass3.sln"),
+    getTest(0, "Vector.format", "Vector_pass.py", "Vector_pass4.input", "Vector_pass4.sln")
 ]
 
 def testPyGen():
