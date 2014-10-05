@@ -93,17 +93,94 @@ lets the script know that -c is a command line option that is followed by an
 `int`. The generated Parser will parse the text following -c as an integer and
 store the result in a global variable called `count`.
 
-The <single> tag
+The \<objects\> tag
 ================
 
-Information under the <single> tag denotes how single lines are parsed into
-objects. These specifications follow the format:
+Information under the **\<objects\>** tag denotes how particular lines in the
+Input File will be parsed into objects in the generated Parser. These
+specifications follow the format:
 
-    <single>
-    CLASS_NAME
-        VARIABLE_NAME:PRIMITIVE_TYPE VARIABLE_NAME:PRIMITIVE_TYPE (...and so on...)
-    CLASS_NAME
-        (...and so on...)
+    <objects>
+    OBJECT1_NAME
+        LINE1
+        LINE2
+        ...
+    OBJECT2_NAME
+        LINE1
+        LINE2
+        ...
+
+where OBJECT#_NAME is a string indicating the name of a particular object and
+LINE# are the different line formats that forms this object. 
+
+A line format follows this basic format:
+
+    <objects>
+    OBJECT_NAME
+        FIELD1_NAME:FIELD1_TYPE FIELD2_NAME:FIELD2_TYPE
+        FIELD3_NAME:FIELD3_TYPE
+        FIELD4_NAME:FIELD4_TYPE
+
+where each field is a colon-separated quantity specifying a name and type for
+the field. Each line may contain multiple fields, and each object may contain
+multiple lines. For example, suppose the format of a simple 2D Triangle was
+desired. A valid format would be:
+
+    <objects>
+    Triangle
+        x1:int y1:int
+        x2:int y2:int
+        x3:int y3:int
+
+Then, the generated Parser would recognize this input as a `Triangle` object:
+
+    1 2
+    3 4
+    5 6
+
+But not this:
+
+    1 2 3
+    4 5
+    3 5
+
+since the first line has more than just 2 ints. Note that this assumes that the
+delimiter above in the **\<head\>** tag was set to a space.
+
+Parsing empty lines
+-------------------
+
+Line formats may also be empty. In this case, the generated Parser will expect
+there to be an empty line in the input file when parsing the associated object.
+For example, suppose this was an object format:
+
+    <object>
+    Line
+        x1:int x2:int
+
+        x3:int x4:int
+
+Then, the generated parser would recognize this input as a `Line` object:
+
+    1 2
+
+    3 4
+
+But not this:
+
+    1 2
+    3 4
+
+since there is no empty line between the first line and the second.
+
+Parsing repetitive lines
+------------------------
+
+Parsing some points
+-------------------
+
+Suppose the goal is to parse an input file that is a simple list of 3D points. A
+sample objec
 
 where CLASS_NAME is a string indicating the name of a class, VARIABLE_NAME
 is the name of a variable, and PRIMITIVE_TYPE is one of int, string, bool,
