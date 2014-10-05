@@ -3,7 +3,7 @@ from javagenStatic import *
 from util import *
 
 from optparse import OptionParser
-import os
+from os.path import join, splitext, basename
 
 """ Class for generating Java code. """
 class JavaGenerator(CodeGenerator):
@@ -32,7 +32,7 @@ class JavaGenerator(CodeGenerator):
         data structure). The first argument is the class name and the second argument is a list of
         fields (in order) of that class. """
         self.typeNameToParseFuncName[className] = "parse%s" % className
-        classFile = HeimerFile(os.path.join(self.foldername, className + ".java"))
+        classFile = HeimerFile(join(self.foldername, className + ".java"))
         self.classFiles.append(classFile)
         self.currentFile = classFile
 
@@ -296,7 +296,7 @@ class JavaGenerator(CodeGenerator):
         """ Generate main file where the main function resides. """
         self.currentFile = self.output
         self.generateMainFileHeader()
-        self._beginBlock("public class " + os.path.splitext(os.path.basename(self.currentFile.filename))[0])
+        self._beginBlock("public class " + splitext(basename(self.currentFile.filename))[0])
         self.generateHelpMessage()
         self.generateOptionVariables()
         self.generateMainFunction()

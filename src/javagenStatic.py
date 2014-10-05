@@ -48,41 +48,45 @@ public static float parseFloat(String s, int[] lineNumber) {
 
 public static ArrayList<Integer> javagenParseIntList(String[] strings, int[] lineNumber)
 {
+\tif (strings.length == 0)
+\t\tthrow new NumberFormatException(
+\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
 \tArrayList<Integer> resval = new ArrayList<Integer>();
 \tfor (String s : strings)
-\t{
 \t\tresval.add(javagenParseInt(s, lineNumber));
-\t}
 \treturn resval;
 }
 
 public static ArrayList<Boolean> javagenParseBoolList(String[] strings, int[] lineNumber)
 {
+\tif (strings.length == 0)
+\t\tthrow new NumberFormatException(
+\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
 \tArrayList<Boolean> resval = new ArrayList<Boolean>();
 \tfor (String s : strings)
-\t{
 \t\tresval.add(javagenParseBool(s, lineNumber));
-\t}
 \treturn resval;
 }
 
 public static ArrayList<String> javagenParseStringList(String[] strings, int[] lineNumber)
 {
+\tif (strings.length == 0)
+\t\tthrow new NumberFormatException(
+\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
 \tArrayList<String> resval = new ArrayList<String>();
 \tfor (String s : strings)
-\t{
 \t\tresval.add(javagenParseString(s, lineNumber));
-\t}
 \treturn resval;
 }
 
 public static ArrayList<Float> javagenParseFloatList(String[] strings, int[] lineNumber)
 {
+\tif (strings.length == 0)
+\t\tthrow new NumberFormatException(
+\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
 \tArrayList<Float> resval = new ArrayList<Float>();
 \tfor (String s : strings)
-\t{
 \t\tresval.add(javagenParseFloat(s, lineNumber));
-\t}
 \treturn resval;
 }
 
