@@ -1,5 +1,3 @@
-""" General utility class used by the various components. """
-
 class HeimerFile:
     """ Simple custom file class used by code generation components. """
 
