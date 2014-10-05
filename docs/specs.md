@@ -2,37 +2,33 @@ Overview
 ========
 
 The Heimer script takes a format file and generates a parser which will parse
-files of the format specified by the format file. It supports generating parser 
-code in python, c++, and java which can be extended to other languages in the 
+files for the format specified by the format file. It supports generating parser
+code in Python, C++, and Java and can be extended to other languages in the
 future.
 
 Terminology
 ===========
 
-The Heimer script is somewhat confusing to understand, since it parses a format
-file to generate a parser that parses files. Therefore, the following terminology
-will be used in this specification to make it clear what is being referred to.
+The script is somewhat confusing to understand, since it parses a format file to
+generate a parser that parses files of that format. Therefore, the following
+terminology will be used in this specification to make it clear what is being
+referred to.
 
-( Format File ) => | Heimer Script | => ( Parser )
-( Input File  ) => | Parser | => ( User Actions )
-* Diagram of expected I/O sequences
+    ( Format File ) => | Heimer Script | => ( Parser )
+    ( Input File  ) => | Parser | => ( User Actions )
 
-Format File:
-    The file that specifies command line options, Heimer specific flags, and
-    the format of the file that the Parser being generated is required to
-    parse.
-Heimer Script:
-    The script that is being written that will generate a parser from the
-    Format File provided.
-Parser:
-    The generated parser in a particular language. It should be able to parse
-    files of the format specified in the Format File.
-Input File:
-    The input file that the Parser will be able to parse. The format of these
-    files are specified in the Format File.
-User Actions:
-    The user specified actions that should occur after the Parser parses an
-    Input File.
+    Fig: Diagram of expected I/O sequences
+
+* **Format File**: This file specifies the format of the file that the Parser
+  being generated will is required to parse.
+* **Heimer Script**: The script that will generate a parser from the provided
+  Format File.
+* **Parser**: The generated parser in a particular language. It should be able
+  to parse files of the format specified in the Format File.
+* **Input File**: The input file to the Parser. The Parser should be able to
+  parse this file and run any additional user code.
+* **User Actions**: Any actions that additional user code within the Parser
+  take.
 
 Format File format
 ==================
@@ -42,17 +38,31 @@ corresponding information under each tag.
 
 <head>
     Contains Heimer-specific options and flags.
-<single>
-<multiple>
-    Specifies the format that the generated program will expect lines within
-    the Input File to look like, as well as what classes will need to be
-    programmatically generated.
+<options>
+    Contains the command-line options that the generated Parser will be able to
+    handle.
+<objects>
+    Specifies different object formats. Each object will be represented as a
+    class in the Parser and will be parsed according to the format specified in
+    this section.
 <body>
-    Specifies the format of the entire Input File, in terms of classes
-    specified under <single> and <multiple>, or with primitive data types.
+    Specifies the format for the entire input file in terms of the objects
+    specified under the <objects> tag, or with primitive data types.
 
 The <head> tag
 ==============
+
+The <head> tag contains Heimer-specific options and flags. The supported flags
+are noted here:
+
+delimiter "<string>"
+-------------------
+This sets the delimiter string used throughout the parser. For instance,
+
+    <head>
+    delimiter ","
+
+sets the global delimiter as a single comma
 
 For now, the <head> tag only includes a delimiter option, which tells Heimer
 what symbol(s) to use when delimiting items in a single line. For instance,
