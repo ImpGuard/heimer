@@ -1,11 +1,9 @@
 <objects>
 Size
     x:int y:int
-
 ImageHeader
     name:string
     size:Size
-
 <body>
 header:ImageHeader
 data:list(int):+

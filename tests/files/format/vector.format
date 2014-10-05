@@ -3,11 +3,9 @@ Point
     x:int
     y:int
     z:int
-
 Vector
     start:Point
     end:Point
-
 <body>
 count:int
 
