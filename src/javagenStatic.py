@@ -84,6 +84,13 @@ public static ArrayList<Float> javagenParseFloatList(String[] strings, int[] lin
 \t}
 \treturn resval;
 }
+
+public static String readLine(RandomAccessFile f) throws IOException
+{
+\tString result = f.readLine();
+\tif (result == null) throw new EOFException();
+\treturn result;
+}
 """
 
     helpers = helpers.replace("javagenParseInt", CodeGenerator.PARSE_INT)

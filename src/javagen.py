@@ -68,6 +68,10 @@ class JavaGenerator(CodeGenerator):
         # Import library headers
         self.currentFile.writeLine("import java.util.ArrayList;")
         self.currentFile.writeLine("import java.util.Arrays;")
+        self.currentFile.writeLine("import java.io.RandomAccessFile;")
+        self.currentFile.writeLine("import java.io.EOFException;")
+        self.currentFile.writeLine("import java.io.IOException;")
+
         self.currentFile.writeNewline()
 
     def generateHelperFunctions(self):
@@ -97,20 +101,19 @@ class JavaGenerator(CodeGenerator):
             for line in lines:
                 didRepeat = didRepeat or line.isRepeating()
                 didRepeatPlus = didRepeatPlus or  line.isOneOrMoreRepetition()
-                didSplit = didSplit or line.numFields() > 1
-                for field in line:
-                    didSplit = didSplit or field.isList()
+                didSplit = didSplit or line.numFields() > 1 or (not line.isEmpty() and line.getField(0).isList())
 
             if didSplit:
                 writeLine("String[] fields;")
             if didRepeat:
+                writeLine("long prevFilePos = f.getFilePointer();")
                 writeLine("int prevLineNumber = lineNumber[0];")
             if didRepeatPlus:
                 writeLine("boolean didRepeatOnce = false;")
 
         def handleEmptyLine():
             # Handle the empty line case
-            self._beginBlock("if (!lines[lineNumber[0]].trim().equals(\"\"))")
+            self._beginBlock("if (!readLine(f).trim().equals(\"\"))")
             writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
                 "\": Should be an empty line\");")
             self._endBlock()
@@ -121,18 +124,18 @@ class JavaGenerator(CodeGenerator):
             if isSimplePrimitive(field):
                 # Field is simple, just parse it
                 writeLine("result." + field.name() + " = "
-                    + self.typeNameToParseFuncName[field.typeName()] + "(lines[lineNumber[0]], lineNumber);")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f), lineNumber);")
                 writeLine("lineNumber[0] += 1;")
             elif field.isPrimitive():
                 # Field is primitive list, split line
-                writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
                 write("result." + field.name() + " = "
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber);")
                 writeLine("lineNumber[0] += 1;")
             else:
                 # Field is a class, recurse
                 writeLine("result." + field.name() + " = "
-                    + self.typeNameToParseFuncName[field.typeName()] + "(lines, lineNumber);")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(f, lineNumber);")
 
         def handleSimpleLineMultipleField(index, field):
             # Helper for handleSimpleLine
@@ -149,13 +152,15 @@ class JavaGenerator(CodeGenerator):
                 # Field is a class? Cannot be!
                 raise Exception("This should never happen.")
 
+            writeLine("lineNumber[0] += 1;")
+
         def handleSimpleLine(line):
             if line.numFields() == 1:
                 # Only one field, no need to split unnecessarily
                 handleSimpleLineOneField(line.getField(0))
             else:
                 # Multiple fields, split it
-                writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
                 if (line.getField(-1).isList()):
                     self._beginBlock("if (fields.length < " + str(line.numFields() - 1) + ")")
                 else:
@@ -166,25 +171,23 @@ class JavaGenerator(CodeGenerator):
                 for index, field in enumerate(line):
                     handleSimpleLineMultipleField(index, field)
 
-                writeLine("lineNumber[0] += 1;")
-
         def handleRepeatingLineForField(field):
             # Helper for handleRepeating
             if isSimplePrimitive(field):
                 # Field is simple, just parse it
                 writeLine("result." + field.name() + ".add("
-                    + self.typeNameToParseFuncName[field.typeName()] + "(lines[lineNumber[0]], lineNumber));")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f), lineNumber));")
                 writeLine("lineNumber[0] += 1;")
             elif field.isPrimitive():
                 # Field is primitive list, split line
-                writeLine("fields = lines[lineNumber[0]].split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
                 writeLine("result." + field.name() + ".add("
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber));")
                 writeLine("lineNumber[0] += 1;")
             else:
                 # Field is a class, recurse
                 writeLine("result." + field.name() + ".add("
-                    + self.typeNameToParseFuncName[field.typeName()] + "(lines, lineNumber));")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(f, lineNumber));")
 
         def handleRepeatingLine(line):
             # Must be a primitive or class repeated
@@ -216,10 +219,15 @@ class JavaGenerator(CodeGenerator):
                 self._beginBlock("try")
                 # Initialize object
                 writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
+                # Save initial position
+                writeLine("prevFilePos = f.getFilePointer();")
+                writeLine("prevLineNumber = lineNumber[0];")
+                writeLine(line)
                 # Begin infinite loop
                 self._beginBlock("while (true)")
                 # Main handler
                 handleRepeatingLineForField(field)
+                writeLine("prevFilePos = f.getFilePointer();")
                 writeLine("prevLineNumber = lineNumber[0];")
                 # Check for newline
                 if (line.isSplitByNewline()):
@@ -229,6 +237,7 @@ class JavaGenerator(CodeGenerator):
                 self._endBlock()
                 # Catch any errors, reset line number and continue
                 self._beginBlock("catch (Exception e)")
+                writeLine("f.seek(prevFilePos);")
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
             elif line.isOneOrMoreRepetition:
@@ -242,6 +251,7 @@ class JavaGenerator(CodeGenerator):
                 self._beginBlock("while (true)")
                 # Main handler
                 handleRepeatingLineForField(field)
+                writeLine("prevFilePos = f.getFilePointer();")
                 writeLine("prevLineNumber = lineNumber[0];")
                 writeLine("didRepeatOnce = true;")
                 # Check for newline
@@ -256,13 +266,14 @@ class JavaGenerator(CodeGenerator):
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
                     "\": Expecting at least 1 " + field.typeName() + " (0 found)\");")
                 self._endBlock()
+                writeLine("f.seek(prevFilePos);")
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
             else:
                 raise Exception("This should never happen.")
 
 
-        self._beginBlock("public static " + className + " parse" + className + "(String[] lines, int[] lineNumber)")
+        self._beginBlock("public static " + className + " parse" + className + "(RandomAccessFile f, int[] lineNumber) throws IOException")
         generateSetup()
 
         # Handle the three different cases, helpers are inner functions defined above
@@ -299,10 +310,10 @@ class JavaGenerator(CodeGenerator):
         """ For generating the main file header, such as the import statements. """
         # Import library headers
         self.currentFile.writeLine("import java.util.ArrayList;")
-        self.currentFile.writeLine("import java.util.Scanner;")
-        self.currentFile.writeLine("import java.io.File;")
+        self.currentFile.writeLine("import java.io.RandomAccessFile;")
         self.currentFile.writeLine("import java.io.FileNotFoundException;")
-        self.currentFile.writeLine("import java.lang.ArrayIndexOutOfBoundsException;")
+        self.currentFile.writeLine("import java.io.IOException;")
+        self.currentFile.writeLine("import java.io.EOFException;")
         self.currentFile.writeNewline()
 
     def generateOptionVariables(self):
@@ -424,36 +435,40 @@ class JavaGenerator(CodeGenerator):
 
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
+        writeLine = self.currentFile.writeLine
         # Begin function declaration
         self._beginBlock("private static " + self.bodyTypeName
-            + " " + CodeGenerator.PARSE_INPUT + "(String[] lines)")
+            + " " + CodeGenerator.PARSE_INPUT + "(RandomAccessFile f)")
 
         # Setup line number
-        self.currentFile.writeLine("int[] lineNumber = {0};")
+        writeLine("int[] lineNumber = {0};")
 
         # Main try block
         self._beginBlock("try")
-        self.currentFile.writeLine(self.bodyTypeName + " result = "
-            + CodeGenerator.UTIL_FILE_NAME + ".parse" + self.bodyTypeName + "(lines, lineNumber);")
-        self._beginBlock("if (lineNumber[0] != lines.length)")
-        self.currentFile.writeLine("throw new RuntimeException(\"Parser Error: Did not reach end of file\");")
+        writeLine(self.bodyTypeName + " result = "
+            + CodeGenerator.UTIL_FILE_NAME + ".parse" + self.bodyTypeName + "(f, lineNumber);")
+        writeLine("String line;")
+        self._beginBlock("while ((line = f.readLine()) != null)")
+        self._beginBlock("if (!line.equals(\"\"))")
+        writeLine("throw new RuntimeException(\"Parser Error: Did not reach end of file\");")
         self._endBlock()
-        self.currentFile.writeLine("return result;")
+        self._endBlock()
+        writeLine("return result;")
         self._endBlock()
 
-        # Begin catch array out of bounds
-        self._beginBlock("catch (ArrayIndexOutOfBoundsException e)")
-        self.currentFile.writeLine("System.err.println(\"Parser Error: Reached end of file before finished parsing\");")
-        self.currentFile.writeLine("System.exit(1);")
+        # Begin catch end of file
+        self._beginBlock("catch (EOFException e)")
+        writeLine("System.err.println(\"Parser Error: Reached end of file before finished parsing\");")
+        writeLine("System.exit(1);")
         self._endBlock()
 
         # Begin other exception catches
         self._beginBlock("catch (Exception e)")
-        self.currentFile.writeLine("System.err.println(e.getMessage());")
-        self.currentFile.writeLine("System.exit(1);")
+        writeLine("System.err.println(e.getMessage());")
+        writeLine("System.exit(1);")
         self._endBlock()
 
-        self.currentFile.writeLine("return null;")
+        writeLine("return null;")
 
         # End function declaration
         self._endBlock()
@@ -473,28 +488,24 @@ class JavaGenerator(CodeGenerator):
         writeLine("String filename = " + CodeGenerator.USER_ARGS + ".get(0);")
         # Try to parse the file
         self._beginBlock("try")
-        writeLine("Scanner s = new Scanner(new File(filename));")
-        writeLine("ArrayList<String> list = new ArrayList<String>();")
-        self._beginBlock("while (s.hasNextLine())")
-        writeLine("list.add(s.nextLine());")
-        self._endBlock()
-        writeLine("s.close();")
-        self._beginBlock("while (list.get(list.size() - 1).equals(\"\"))")
-        self.currentFile.writeLine("list.remove(list.size() - 1);")
-        self._endBlock()
-        writeLine("String[] inputLines = list.toArray(new String[list.size()]);")
-        writeLine("return " + CodeGenerator.PARSE_INPUT + "(inputLines);")
+        writeLine("RandomAccessFile f = new RandomAccessFile(filename, \"r\");")
+        writeLine(self.bodyTypeName + " result = " + CodeGenerator.PARSE_INPUT + "(f);")
+        writeLine("f.close();")
+        writeLine("return result;")
         self._endBlock()
         # File not found!
         self._beginBlock("catch (FileNotFoundException e)")
-        self.currentFile.writeLine("System.err.println(\"Input file '\" + filename + \"' not found\");")
-        self.currentFile.writeLine("System.exit(1);")
+        writeLine("System.err.println(\"Input file '\" + filename + \"' not found\");")
+        writeLine("System.exit(1);")
+        self._endBlock()
+        self._beginBlock("catch (IOException e)")
+        writeLine("System.err.println(\"Could not open '\" + filename + \"'\");")
         self._endBlock()
         self._endBlock()
         # Otherwise error
         self._beginBlock("else")
-        self.currentFile.writeLine("System.err.println(USAGE);");
-        self.currentFile.writeLine("System.exit(1);")
+        writeLine("System.err.println(USAGE);");
+        writeLine("System.exit(1);")
         self._endBlock()
 
         writeLine("return null;")
