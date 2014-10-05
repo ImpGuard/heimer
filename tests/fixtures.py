@@ -213,7 +213,7 @@ def getTest( expectedOutcome, formatFileName, mainFunctionFileName = "", inputFi
     GeneratorFixture for a list of different expected outcome values and their
     meanings.
     """
-    testDirectory = join( "test", "tests" )
+    testDirectory = join( "tests", "files" )
     formatDirectory = join( testDirectory, "format" )
     mainFileDirectory = join( testDirectory, "main" )
 
