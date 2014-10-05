@@ -205,7 +205,7 @@ class PythonFixture(GeneratorFixture):
         chdir(prevWD)
         return out, err, rc == 0
 
-def getTest( expectedOutcome, formatFileName, mainFunctionFileName, inputFileName, solutionFileName ):
+def getTest( expectedOutcome, formatFileName, mainFunctionFileName = "", inputFileName = "", solutionFileName = "" ):
     """ Get a test in the standard test directory.
 
     If the expected outcome is 0, the test will be located in the pass
