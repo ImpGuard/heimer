@@ -36,7 +36,11 @@ p:Point
 # 8
 # 0
 
-# EXAMPLE SOLUTION: basically print out the magnitude of each vectors, on separate lines, then print out the sum of the last point
+# SOLUTION EXPLANATION:
+# Print out the magnitude of each vector on separate lines with one decimal place.
+# Then print out the sum of the elements of the last point.
+
+# EXAMPLE SOLUTION:
 # 1.0
 # 2.0
 # 14
