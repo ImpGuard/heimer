@@ -1,0 +1,6 @@
+<head>
+delimeter ","
+
+<single>
+Point
+    x:int y:int

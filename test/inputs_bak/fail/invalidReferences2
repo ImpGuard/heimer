@@ -1,0 +1,10 @@
+<objects>
+Path
+    count:int
+    points:Point:count
+
+Point:
+    x:int
+
+<body>
+path:Path

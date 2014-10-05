@@ -1,0 +1,11 @@
+<head>
+            delimiter     ","
+<objects>
+    Point
+        x:int y:int
+
+Path
+count:int
+p:Point:count
+<body>
+                path:Path

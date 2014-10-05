@@ -1,0 +1,18 @@
+<single>
+Point
+    x:int y:int
+
+<multiple>
+Path
+    count:int
+    points:Point:count
+
+<body>
+path:Path
+
+# EXAMPLE INPUT:
+# 3
+# 1 2
+# 4 5
+# 3 5
+

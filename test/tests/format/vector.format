@@ -1,0 +1,42 @@
+<objects>
+Point
+    x:int
+    y:int
+    z:int
+
+Vector
+    start:Point
+    end:Point
+
+<body>
+count:int
+
+
+vectors:Vector:count!
+p:Point
+
+# EXAMPLE INPUT
+# 2
+#
+#
+# 1
+# 0
+# 0
+# 2
+# 0
+# 0
+#
+# 1
+# 1
+# 1
+# 1
+# 1
+# 3
+# 6
+# 8
+# 0
+
+# EXAMPLE SOLUTION: basically print out the magnitude of each vectors, on separate lines, then print out the sum of the last point
+# 1.0
+# 2.0
+# 14
