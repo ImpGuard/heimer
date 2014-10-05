@@ -122,9 +122,13 @@ A line format follows this basic format:
         FIELD4_NAME:FIELD4_TYPE
 
 where each field is a colon-separated quantity specifying a name and type for
-the field. Each line may contain multiple fields, and each object may contain
-multiple lines. For example, suppose the format of a simple 2D Triangle was
-desired. A valid format would be:
+the field. The name may not be repeated within an object and the type can be any
+primitive type (int, float, string, bool, list\<primitive\>) or any previously
+defined object type.
+
+Each line may contain multiple fields, and each object may contain multiple
+lines. For example, suppose the format of a simple 2D Triangle was desired. A
+valid format would be:
 
     <objects>
     Triangle
@@ -160,7 +164,7 @@ For example, suppose this was an object format:
 
         x3:int x4:int
 
-Then, the generated parser would recognize this input as a `Line` object:
+Then, the generated Parser would recognize this input as a `Line` object:
 
     1 2
 
@@ -175,6 +179,60 @@ since there is no empty line between the first line and the second.
 
 Parsing repetitive lines
 ------------------------
+
+Sometimes, a particular line format is repeated several times to form an object.
+In this case, a special syntax is used to indicate the repetition. For example,
+suppose an `Path` object was desired which is composed of a list of `Point`
+objects. A valid format would be:
+
+    <object>
+    Point
+        x:int y:int
+    Path
+        points:Point:*
+
+Note the additional component in the first and only field under `Path`. This
+third component is the "repetition string", which indicates how many times a
+Point should be matched. In this case, the `*` indicates that the generated
+Parser should continue matching Point's until it cannot anymore.
+
+Therefore, the generated Parser would recognize this input as a `Path` object:
+
+    1 2
+    3 4
+    5 6
+    1 2
+    3 4
+
+But it would only recognize the first half of this input as a `Path` object:
+
+    1 2
+    3 4
+
+    5 6
+    4 2
+
+since there is a newline separating the first set of points and the second.
+
+The "repetition string" can be any of the following values:
+
+**`*`**:  
+Indicates that the particular object may be repeated 0 or more times.
+
+**`+`**:  
+Indicates that the particular object may be repeated 1 or more times.
+
+**NUMBER**:  
+Indicates that the particular object will be repeated an integral number of
+times.
+
+**VARIABLE**:
+Indicates that the particular object will be repeated a variable number of
+times. This variable may be any previously defined integer number within the
+object.
+
+NOTE: A line with a field with this repetition string may only contain one field
+! If there is more than one it will be a Format File error!
 
 Parsing some points
 -------------------
