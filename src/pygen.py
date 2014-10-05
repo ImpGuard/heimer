@@ -1,15 +1,13 @@
 from codegen import CodeGenerator
 from converter import *
-import util
-import pygenStatic
-
-StringConstants = util.StringConstants
+from util import StringConstants
+from pygenStatic import pygenStaticHelpers
 
 class PythonGenerator(CodeGenerator):
 
     def write( self, line ):
         self.currentFile.write(line)
-    
+
     def writeLine( self, line ):
         self.currentFile.writeLine(line)
 
@@ -45,7 +43,7 @@ class PythonGenerator(CodeGenerator):
 
     def generateClass( self, className, fields ):
         """ Helper function for generating the code segement defining a class (or the corresponding
-        data structure). The first argument is the class name and the second argument is a list of 
+        data structure). The first argument is the class name and the second argument is a list of
         fields (in order) of that class. """
         self.beginBlock("class %s:" % className)
         self.beginBlock("def __init__(self):")
@@ -69,8 +67,8 @@ class PythonGenerator(CodeGenerator):
 
     def generateHelperFunctions(self):
         """ For generating the helper functions that will be useful when parsing in the util file. """
-        primitiveParsers =  pygenStatic.getPrimitiveParsers()
-        self.write(primitiveParsers)
+        helpers =  pygenStaticHelpers()
+        self.write(helpers)
         self.writeNewline()
 
     def generateClassParserFunction( self, className, lines ):
@@ -169,7 +167,7 @@ class PythonGenerator(CodeGenerator):
                     handleEmptyLine()
                 self.endBlock()
                 self.endBlock()
-                
+
                 self.beginBlock("except ( ValueError, IndexError ) as e:")
                 if line.isOneOrMoreRepetition():
                     self.beginBlock("if len(userClass.%s) < 1:" % field.name())
@@ -265,11 +263,11 @@ class PythonGenerator(CodeGenerator):
         options = self.format.commandLineOptions()
         self.writeLine("USAGE = 'usage: %prog [options] input_file_name'")
         self.writeLine("optParser = OptionParser(usage = USAGE)")
-        
+
         variableNames = []
         for opt in options:
             variableNames.append(opt.variableName)
-            self.writeLine("optParser.add_option('-%s', action='store', dest='%s')" % 
+            self.writeLine("optParser.add_option('-%s', action='store', dest='%s')" %
                 ( opt.flagName, opt.variableName ))
         self.writeLine("global %s" % CodeGenerator.USER_ARGS)
         self.writeLine("( options, %s ) = optParser.parse_args(commandLineArguments)" % CodeGenerator.USER_ARGS)
@@ -284,11 +282,11 @@ class PythonGenerator(CodeGenerator):
         self.beginBlock("def %s( inputFile ):" % CodeGenerator.PARSE_INPUT)
         self.beginBlock("try:")
         self.writeLine("lines = inputFile.readlines()")
-        
+
         self.beginBlock("for i in xrange(len(lines)):")
         self.writeLine("lines[i] = lines[i].strip()")
         self.endBlock()
-        
+
         self.writeLine("i = len(lines) - 1")
         self.beginBlock("while i >= 0:")
         self.beginBlock("if lines[i]:")

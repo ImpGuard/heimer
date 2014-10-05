@@ -77,8 +77,7 @@ class JavaGenerator(CodeGenerator):
     def generateHelperFunctions(self):
         """ For generating the helper functions that will be useful when parsing in the util file. """
         # Static helpers for primitives
-        helpers = staticHelpers()
-        helpers.replace("\t", HeimerFile.indentString)
+        helpers = javagenStaticHelpers()
         map(lambda s: self.currentFile.writeLine(s), helpers.splitlines())
         self.currentFile.writeNewline()
 

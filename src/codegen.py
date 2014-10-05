@@ -1,8 +1,8 @@
-""" Base class for generating the parser code. Subclass this for every language supported by Heimer. """
 from util import HeimerFile, StringConstants
 from os.path import dirname, basename, join
 
 class CodeGenerator:
+    """ Base class for generating the parser code. Subclass this for every language supported by Heimer. """
 
     # Filenames
     UTIL_FILE_NAME = "HeimerUtil"

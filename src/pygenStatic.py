@@ -1,8 +1,8 @@
 from codegen import CodeGenerator
-import util
+from util import HeimerFile
 
-def getPrimitiveParsers():
-    primitiveParsers = """
+def pygenStaticHelpers():
+    helpers = """
 def intParse( s, currentLineNumber ):
 \ttry:
 \t\treturn int(s)
@@ -55,16 +55,16 @@ def floatListParse( strings, currentLineNumber ):
 
 
 """
-    primitiveParsers = primitiveParsers.replace( "intParse", CodeGenerator.PARSE_INT )
-    primitiveParsers = primitiveParsers.replace( "boolParse", CodeGenerator.PARSE_BOOL )
-    primitiveParsers = primitiveParsers.replace( "stringParse", CodeGenerator.PARSE_STRING )
-    primitiveParsers = primitiveParsers.replace( "floatParse", CodeGenerator.PARSE_FLOAT )
-    primitiveParsers = primitiveParsers.replace( "intListParse", CodeGenerator.PARSE_INT_LIST )
-    primitiveParsers = primitiveParsers.replace( "boolListParse", CodeGenerator.PARSE_BOOL_LIST )
-    primitiveParsers = primitiveParsers.replace( "stringListParse", CodeGenerator.PARSE_STRING_LIST )
-    primitiveParsers = primitiveParsers.replace( "floatListParse", CodeGenerator.PARSE_FLOAT_LIST )
+    helpers = helpers.replace( "intParse", CodeGenerator.PARSE_INT )
+    helpers = helpers.replace( "boolParse", CodeGenerator.PARSE_BOOL )
+    helpers = helpers.replace( "stringParse", CodeGenerator.PARSE_STRING )
+    helpers = helpers.replace( "floatParse", CodeGenerator.PARSE_FLOAT )
+    helpers = helpers.replace( "intListParse", CodeGenerator.PARSE_INT_LIST )
+    helpers = helpers.replace( "boolListParse", CodeGenerator.PARSE_BOOL_LIST )
+    helpers = helpers.replace( "stringListParse", CodeGenerator.PARSE_STRING_LIST )
+    helpers = helpers.replace( "floatListParse", CodeGenerator.PARSE_FLOAT_LIST )
 
     # Replace the tabs with the appropriate amount of indent spaces
-    primitiveParsers = primitiveParsers.replace( "\t", util.HeimerFile.indentString )
+    helpers = helpers.replace( "\t", HeimerFile.indentString )
 
-    return primitiveParsers
+    return helpers

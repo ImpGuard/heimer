@@ -1,6 +1,7 @@
 from codegen import CodeGenerator
+from util import HeimerFile
 
-def staticHelpers():
+def javagenStaticHelpers():
     helpers = """
 public static int javagenParseInt(String s, int[] lineNumber)
 {
@@ -132,5 +133,8 @@ public static long getFilePointer(RandomAccessFile f)
     helpers = helpers.replace("javagenParseBoolList", CodeGenerator.PARSE_BOOL_LIST)
     helpers = helpers.replace("javagenParseStringList", CodeGenerator.PARSE_STRING_LIST)
     helpers = helpers.replace("javagenParseFloatList", CodeGenerator.PARSE_FLOAT_LIST)
+
+    # Replace the tabs with the appropriate amount of indent spaces
+    helpers = helpers.replace( "\t", HeimerFile.indentString )
 
     return helpers
