@@ -1,5 +1,5 @@
 re
-sys
+sys exit
 collections OrderedDict
 os.path dirname basename join
 optparse OptionParser

@@ -4,7 +4,7 @@ from pygen import PythonGenerator
 from javagen import JavaGenerator
 # from cgen import CGenerator
 
-import sys
+from sys import exit
 from optparse import OptionParser
 
 USAGE = "usage: %prog [options] format_file_name"
@@ -37,13 +37,13 @@ if __name__ == "__main__":
     # Check that a format file is provided
     if len(args) != 1:
         optParser.print_help()
-        sys.exit(1)
+        exit(1)
 
     # Parser format file into a object model
     parser = HeimerFormatFileParser(args[0])
     if parser.parseFailed():
         parser.printFailures()
-        sys.exit(1)
+        exit(1)
 
     # Generate a format object from the object model
     formatObject = HeimerFormat(parser.objectModel)
@@ -58,6 +58,6 @@ if __name__ == "__main__":
         generator = CGenerator(options.outputName, formatObject)
     else:
         print "language not supported."
-        sys.exit(1)
+        exit(1)
 
     generator.codeGen()

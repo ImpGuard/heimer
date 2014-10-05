@@ -30,6 +30,9 @@ if __name__ == "__main__":
     fileOrderFile = open(join(sourceDir, options.fileOrderFileName), "r")
     importFile = open(join(sourceDir, options.importFileName), "r")
 
+    # Write script hashbang
+    writeLine("#!/usr/bin/env python\n")
+
     # Write import lines
     for line in importFile:
         if line == "":
