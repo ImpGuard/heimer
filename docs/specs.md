@@ -280,6 +280,17 @@ simply a line format of the same style as those under objects in the **\<object
 expect the input file to have the overall format of the lines under the
 **\<body\>** tag.
 
+Primitive Types
+===============
+
+The primitive types that HeimerScript supports are integers, floats, strings,
+bools, and list\<primitive\>. For the most part, these are self explanatory, but
+some edge cases are noted here:
+
+* integers must be an ideal integer. Therefore, 1.0 is not an integer, but 1 is.
+* bools can be 1, 0, True, or False, with any form of capitalization.
+* list\<primitive\> must match at least one value, empty lists are unsupported.
+
 Comments
 ========
 
