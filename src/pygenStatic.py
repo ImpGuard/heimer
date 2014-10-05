@@ -3,6 +3,12 @@ from util import HeimerFile
 
 def pygenStaticHelpers():
     helpers = """
+def readline(inputFile):
+\tline = inputFile.readline()
+\tif line == "":
+\t\traise EOFError()
+\treturn line.strip()
+
 def intParse( s, currentLineNumber ):
 \ttry:
 \t\treturn int(s)
