@@ -310,10 +310,12 @@ class PythonGenerator(CodeGenerator):
         self.endBlock()
 
         self.beginBlock("except ValueError as e:")
-        self.writeLine("sys.stderr.write(e)")
+        self.writeLine("sys.stderr.write(str(e))")
+        self.writeLine("exit(1)")
         self.endBlock()
         self.beginBlock("except IndexError as e:")
         self.writeLine("sys.stderr.write('Parser Error: Reached end of file before finished parsing.')")
+        self.writeLine("exit(1)")
         self.endBlock()
 
         self.endBlock()
@@ -338,6 +340,8 @@ class PythonGenerator(CodeGenerator):
         self.endBlock()
         self.beginBlock("except Exception as e:")
         self.writeLine("sys.stderr.write('Parser Error: %s' % e)")
+        self.writeLine("import traceback")
+        self.writeLine("traceback.print_exc()")
         self.writeLine("exit(1)")
         self.endBlock()
 
