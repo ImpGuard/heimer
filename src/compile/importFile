@@ -1,5 +1,5 @@
 re
 sys exit
 collections OrderedDict
-os.path dirname basename join
+os.path dirname basename join splitext
 optparse OptionParser
