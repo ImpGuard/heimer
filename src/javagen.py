@@ -106,7 +106,7 @@ class JavaGenerator(CodeGenerator):
             if didSplit:
                 writeLine("String[] fields;")
             if didRepeat:
-                writeLine("long prevFilePos = f.getFilePointer();")
+                writeLine("long prevFilePos = getFilePointer(f);")
                 writeLine("int prevLineNumber = lineNumber[0];")
             if didRepeatPlus:
                 writeLine("boolean didRepeatOnce = false;")
@@ -220,14 +220,14 @@ class JavaGenerator(CodeGenerator):
                 # Initialize object
                 writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
                 # Save initial position
-                writeLine("prevFilePos = f.getFilePointer();")
+                writeLine("prevFilePos = getFilePointer(f);")
                 writeLine("prevLineNumber = lineNumber[0];")
                 writeLine(line)
                 # Begin infinite loop
                 self._beginBlock("while (true)")
                 # Main handler
                 handleRepeatingLineForField(field)
-                writeLine("prevFilePos = f.getFilePointer();")
+                writeLine("prevFilePos = getFilePointer(f);")
                 writeLine("prevLineNumber = lineNumber[0];")
                 # Check for newline
                 if (line.isSplitByNewline()):
@@ -237,7 +237,7 @@ class JavaGenerator(CodeGenerator):
                 self._endBlock()
                 # Catch any errors, reset line number and continue
                 self._beginBlock("catch (Exception e)")
-                writeLine("f.seek(prevFilePos);")
+                writeLine("seek(f, prevFilePos);")
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
             elif line.isOneOrMoreRepetition:
@@ -251,7 +251,7 @@ class JavaGenerator(CodeGenerator):
                 self._beginBlock("while (true)")
                 # Main handler
                 handleRepeatingLineForField(field)
-                writeLine("prevFilePos = f.getFilePointer();")
+                writeLine("prevFilePos = getFilePointer(f);")
                 writeLine("prevLineNumber = lineNumber[0];")
                 writeLine("didRepeatOnce = true;")
                 # Check for newline
@@ -266,14 +266,14 @@ class JavaGenerator(CodeGenerator):
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
                     "\": Expecting at least 1 " + field.typeName() + " (0 found)\");")
                 self._endBlock()
-                writeLine("f.seek(prevFilePos);")
+                writeLine("seek(f, prevFilePos);")
                 writeLine("lineNumber[0] = prevLineNumber;")
                 self._endBlock()
             else:
                 raise Exception("This should never happen.")
 
 
-        self._beginBlock("public static " + className + " parse" + className + "(RandomAccessFile f, int[] lineNumber) throws IOException")
+        self._beginBlock("public static " + className + " parse" + className + "(RandomAccessFile f, int[] lineNumber)")
         generateSetup()
 
         # Handle the three different cases, helpers are inner functions defined above

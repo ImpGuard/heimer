@@ -85,11 +85,42 @@ public static ArrayList<Float> javagenParseFloatList(String[] strings, int[] lin
 \treturn resval;
 }
 
-public static String readLine(RandomAccessFile f) throws IOException
+public static String readLine(RandomAccessFile f)
 {
-\tString result = f.readLine();
-\tif (result == null) throw new EOFException();
-\treturn result;
+\ttry
+\t{
+\t\tString result = f.readLine();
+\t\tif (result == null) throw new EOFException();
+\t\treturn result;
+\t}
+\tcatch (IOException e)
+\t{
+\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file");
+\t}
+}
+
+public static void seek(RandomAccessFile f, long pos)
+{
+\ttry
+\t{
+\t\tf.seek(pos);
+\t}
+\tcatch (IOException e)
+\t{
+\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file");
+\t}
+}
+
+public static long getFilePointer(RandomAccessFile f)
+{
+\ttry
+\t{
+\t\treturn f.getFilePointer();
+\t}
+\tcatch (IOException e)
+\t{
+\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file");
+\t}
 }
 """
 
