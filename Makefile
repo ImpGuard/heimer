@@ -9,11 +9,11 @@ check:
 	@$(test)
 
 checkpython:
-	@$(test) test/pygen_test.py
+	@$(test) tests/pygen_test.py
 
 checkjava:
-	@$(test) test/javagen_test.py
+	@$(test) tests/javagen_test.py
 
 clean:
-	@rm -rf test/*.pyc src/*.pyc test_tmp out.py
+	@rm -rf tests/*.pyc src/*.pyc test_tmp out.py
 
