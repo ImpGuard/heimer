@@ -18,17 +18,20 @@ referred to.
     ( Format File ) => | Heimer Script | => ( Parser )
     ( Input File  ) => | Parser | => ( User Actions )
 
-**Format File**:  
-This file specifies the format of the file that the Parser being generated will is required to parse.
+**Format File**: 
+This file specifies the format of the file that the Parser being generated will
+is required to parse.
 
 **Heimer Script**:  
 The script that will generate a parser from the provided Format File.
 
 **Parser**:  
-The generated parser in a particular language. It should be able to parse files of the format specified in the Format File.
+The generated parser in a particular language. It should be able to parse files
+of the format specified in the Format File.
 
 **Input File**:  
-The input file to the Parser. The Parser should be able to parse this file and run any additional user code.
+The input file to the Parser. The Parser should be able to parse this file and
+run any additional user code.
 
 **User Actions**:  
 Any actions that additional user code within the Parser take.
@@ -58,7 +61,8 @@ corresponding information under each tag.
 The \<head\> tag
 ==============
 
-The \<head\> tag contains Heimer-specific options and flags. The supported flags are noted here:
+The **\<head\>** tag contains Heimer-specific options and flags. The supported
+flags are noted here:
 
 delimiter "[string]"
 -------------------
@@ -67,14 +71,14 @@ This sets the delimiter string used throughout the parser. For instance,
     <head>
     delimiter ","
 
-sets the global delimiter as a single comma, so a line 0,1,2,3 will be tokenized as ["0", "1", "2",
-"3"].
+sets the global delimiter as a single comma, so a line 0,1,2,3 will be tokenized
+as ["0", "1", "2", "3"].
 
-The <options> tag
+The \<options\> tag
 =================
 
-The optional <options> tag designates how to parse command line options in the
-generated program. Each line under the <options> tag must be of the format
+The optional **\<options\>** tag designates how to parse command line options in 
+the generated program. Each line under the <options> tag must be of the format
 
     FLAG_CHAR ARG_NAME PRIMITIVE_TYPE
 
@@ -85,9 +89,9 @@ or string. For instance,
     <options>
     c count int
 
-lets us know that -c is a command line option that is followed by an int. Our
-generated code will parse text following -c as an integer, and store the
-result in a global variable called count.
+lets the script know that -c is a command line option that is followed by an 
+`int`. The generated Parser will parse the text following -c as an integer and
+store the result in a global variable called `count`.
 
 The <single> tag
 ================
