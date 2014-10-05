@@ -181,6 +181,7 @@ class HeimerFormatFileParser:
                 lineMarker += 1
                 currentStrippedLine = ParserUtil.stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
                 if not currentStrippedLine:
+                    classDecl.addFieldsAsLine([])
                     continue
                 if RegexPatterns.CLASS_NAME.match(currentStrippedLine):
                     lineMarker -= 1
