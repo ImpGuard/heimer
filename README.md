@@ -30,4 +30,4 @@ See the documentation for [nose](https://nose.readthedocs.org/en/latest/) for
 more information on how testing works. All tests are located within the
 folder `tests`.
 
-Link to [documentation](docs/specs)
+Link to [documentation](docs/specs.md)
