@@ -9,8 +9,8 @@ tests = [
     getTest(0, "vector.format", "vector.py", "vector_pass2.input", "vector_pass2.sln"),
     getTest(0, "vector.format", "vector.py", "vector_pass3.input", "vector_pass3.sln"),
     getTest(0, "vector.format", "vector.py", "vector_pass4.input", "vector_pass4.sln"),
-    getTest(4, "vector.format", "vector.py", "vector_fail1.input", "vector_fail1.sln"),
-    getTest(4, "vector.format", "vector.py", "vector_fail2.input", "vector_fail2.sln")
+    getTest(4, "vector.format", "vector.py", "vector_fail1.input"),
+    getTest(4, "vector.format", "vector.py", "vector_fail2.input")
 ]
 
 def testPyGen():

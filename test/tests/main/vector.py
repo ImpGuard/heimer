@@ -7,5 +7,5 @@ if __name__ == "__main__":
         z = float(vector.end.z - vector.start.z)
         return math.sqrt(x * x + y * y + z * z)
     for v in body.vectors:
-        print magn(v)
+        print "%.1f" % magn(v)
     print (body.p.x + body.p.y + body.p.z)
