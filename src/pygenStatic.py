@@ -37,24 +37,32 @@ def floatParse( s, currentLineNumber ):
 
 def intListParse( strings, currentLineNumber ):
 \tintList = []
+\tif len(strings) == 0:
+\t\traise ValueError("Parser Error on line %d: Could not parse empty string as list." % currentLineNumber)
 \tfor s in strings:
 \t\tintList.append(intParse( s, currentLineNumber ))
 \treturn intList
 
 def boolListParse( strings, currentLineNumber ):
 \tboolList = []
+\tif len(strings) == 0:
+\t\traise ValueError("Parser Error on line %d: Could not parse empty string as list." % currentLineNumber)
 \tfor s in strings:
 \t\tboolList.append(boolParse( s, currentLineNumber ))
 \treturn boolList
 
 def stringListParse( strings, currentLineNumber ):
 \tstringList = []
+\tif len(strings) == 0:
+\t\traise ValueError("Parser Error on line %d: Could not parse empty string as list." % currentLineNumber)
 \tfor s in strings:
 \t\tstringList.append(stringParse( s, currentLineNumber ))
 \treturn stringList
 
 def floatListParse( strings, currentLineNumber ):
 \tfloatList = []
+\tif len(strings) == 0:
+\t\traise ValueError("Parser Error on line %d: Could not parse empty string as list." % currentLineNumber)
 \tfor s in strings:
 \t\tfloatList.append(floatParse( s, currentLineNumber ))
 \treturn floatList

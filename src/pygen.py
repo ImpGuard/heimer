@@ -121,10 +121,10 @@ class PythonGenerator(CodeGenerator):
                     self.writeLine("raise ValueError('Parser Error on line %d: Expecting " + \
                         str(line.numFields()) + " fields (%d found).' % ( currentLineNumber, len(fields) ))")
                     self.endBlock()
-                # Else there should be at least X-1 fields on the line, where X is the number of fields
+                # Else there should be at least X fields on the line, where X is the number of fields
                 # on the line in the format file
                 else:
-                    self.beginBlock("if len(fields) < %d:" % (line.numFields() - 1))
+                    self.beginBlock("if len(fields) < %d:" % (line.numFields()))
                     self.writeLine("raise ValueError('Parser Error on line %d: Expecting " + \
                         str(line.numFields()) + " fields (%d found).' % ( currentLineNumber, len(fields) ))")
                     self.endBlock()
@@ -192,7 +192,7 @@ class PythonGenerator(CodeGenerator):
                 self.beginBlock("for _index in xrange(%s):" % numRepetition)
                 # Field is an user defined class.
                 if not field.isPrimitive():
-                    self.writeLine("retObj, currentLineNumber, currentLinePos = %s( lines, currentLineNumber, currentLinePos )" % self.typeNameToParseFuncName[field.typeName()])
+                    self.writeLine("retObj, currentLineNumber, currentLinePos = %s( inputFile, currentLineNumber, currentLinePos )" % self.typeNameToParseFuncName[field.typeName()])
                 # Field is a non-list primitive.
                 elif field.isPrimitive() and not field.isList():
                     self.writeLine("retObj = %s( readline(inputFile), currentLineNumber )" % \
