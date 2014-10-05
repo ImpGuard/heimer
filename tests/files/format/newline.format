@@ -1,0 +1,34 @@
+<objects>
+ImaginaryNumber
+    real:int
+
+    imaginary:int
+<body>
+numbers:ImaginaryNumber:+!
+
+
+extra:ImaginaryNumber
+
+# EXAMPLE INPUT
+# 3
+#
+# 5
+#
+# 4
+#
+# 6
+#
+#
+# 4
+#
+# 3
+
+# SOLUTION EXPLANATION:
+# Print out each imaginary number in the complex number format. Then print out
+# the extra imaginary number separately.
+
+# EXAMPLE SOLUTION:
+# 3 + 5i
+# 4 + 6i
+#
+# 4 + 3i
