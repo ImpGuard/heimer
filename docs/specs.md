@@ -14,10 +14,9 @@ generate a parser that parses files of that format. Therefore, the following
 terminology will be used in this specification to make it clear what is being
 referred to.
 
+    Figure of I/O sequence:
     ( Format File ) => | Heimer Script | => ( Parser )
     ( Input File  ) => | Parser | => ( User Actions )
-
-    Fig: Diagram of expected I/O sequences
 
 * **Format File**: This file specifies the format of the file that the Parser
   being generated will is required to parse.
@@ -36,20 +35,20 @@ Format File format
 The Format File consists of 4 tags, enclosed by angled brackets, and the
 corresponding information under each tag.
 
-<head>
+\<head\>
     Contains Heimer-specific options and flags.
-<options>
+\<options\>
     Contains the command-line options that the generated Parser will be able to
     handle.
-<objects>
+\<objects\>
     Specifies different object formats. Each object will be represented as a
     class in the Parser and will be parsed according to the format specified in
     this section.
-<body>
+\<body\>
     Specifies the format for the entire input file in terms of the objects
-    specified under the <objects> tag, or with primitive data types.
+    specified under the \<objects\> tag, or with primitive data types.
 
-The <head> tag
+The \<head\> tag
 ==============
 
 The <head> tag contains Heimer-specific options and flags. The supported flags
