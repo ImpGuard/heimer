@@ -24,8 +24,10 @@ All the source files are located within the folder `heimer`. In order to test
 the script, use nose within the home directory (which is installed as a
 dependency):
 
-    nosetests
+    make check                      # Calls nose indirectly
 
 See the documentation for [nose](https://nose.readthedocs.org/en/latest/) for
 more information on how testing works. All tests are located within the
 folder `tests`.
+
+Link to [documentation](docs/specs)
