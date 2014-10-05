@@ -177,6 +177,11 @@ But not this:
 
 since there is no empty line between the first line and the second.
 
+**Warning**: Since newlines are parsed in this way, any newlines BETWEEN object
+formats after the first will also be parsed as a newline attributed to the
+previous object. Therefore, object formats may not be separated by a newline in
+the Format File.
+
 Parsing repetitive lines
 ------------------------
 
@@ -298,7 +303,6 @@ Graph Parser
     <objects>
     Adjacency
         vertex:int neighbors:list(int)
-
     Graph
         name:string
         adjacencies:Adjacency:+
