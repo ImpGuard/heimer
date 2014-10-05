@@ -222,16 +222,16 @@ Indicates that the particular object may be repeated 0 or more times.
 **`+`**:  
 Indicates that the particular object may be repeated 1 or more times.
 
-**NUMBER**:  
+`integer`:  
 Indicates that the particular object will be repeated an integral number of
 times.
 
-**VARIABLE**:
+`variable`:  
 Indicates that the particular object will be repeated a variable number of
 times. This variable may be any previously defined integer number within the
 object.
 
-NOTE: A line with a field with this repetition string may only contain one field
+**WARNING**: A line with a field with this repetition string may only contain one field
 ! If there is more than one it will be a Format File error!
 
 Parsing some points
