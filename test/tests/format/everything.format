@@ -1,0 +1,33 @@
+<body>
+numbers:int:*
+
+x:float y:string z:bool
+str_array:list(string):3
+
+
+
+a:int b:bool int_array:list(int)
+lol:list(string):0
+
+# EXAMPLE INPUT
+# 3
+# 3
+# 4
+# 
+# 1.5 lol false
+# this is dumb
+# and you should feel bad
+# please god no
+# 
+# 
+# 
+# 10 true 1 2 3 4 5 6
+
+# EXAMPLE SOLUTION:
+# On separate line, output the sum of numbers (0 if it doesn't exist), 'T' if z is true otherwise
+# 'F', str_array join by ',', and sum of int_array.
+
+# 10
+# F
+# this is dumb, and you should feel bad, please god no
+# 21
