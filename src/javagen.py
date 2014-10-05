@@ -161,7 +161,7 @@ class JavaGenerator(CodeGenerator):
                 # Multiple fields, split it
                 writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
                 if (line.getField(-1).isList()):
-                    self._beginBlock("if (fields.length < " + str(line.numFields() - 1) + ")")
+                    self._beginBlock("if (fields.length < " + str(line.numFields()) + ")")
                 else:
                     self._beginBlock("if (fields.length != " + str(line.numFields()) + ")")
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] + " +
