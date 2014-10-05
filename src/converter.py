@@ -190,8 +190,8 @@ def _generateFormatLines( className, userClasses ):
                 mode != StringConstants.LINE_ZERO_OR_MORE and \
                 ( mode not in variables or \
                 not variables[mode].isInteger() ) ):
-                raise ValueError("Unknown repetition mode '%s': it must be either an integer, \
-                    the symbol '+' or '*', or an int variable already defined in class." % mode)
+                raise ValueError("Unknown repetition mode '%s': it must be either an integer, " + \
+                    "the symbol '+' or '*', or an int variable already defined in class." % mode)
         lines.append(FormatLine( fields ))
     return lines
 
@@ -199,11 +199,11 @@ def _generateFormatLines( className, userClasses ):
 def _assertValidName( name, usedNames ):
     """ Verify a name isn't already used by another user defined class or field. """
     if name in usedNames:
-        raise ValueError("Name conflict: User defined class/field must have unique name, the name \
-            '%s' is used more than once." % name)
+        raise ValueError("Name conflict: User defined class/field must have unique name, the name " + \
+            "'%s' is used more than once." % name)
     if isPrimitive(name):
-        raise ValueError("Name conflict: '%s' is a primitive type and cannot be used as the name \
-            of user defined classes/fields." % name)
+        raise ValueError("Name conflict: " + name + " is a primitive type and cannot be used as " + \
+            "the name of user defined classes/fields.")
 
 def _assertValidType( typeName, userClasses ):
     # Valid type if it's a user defined class
@@ -222,8 +222,8 @@ def _assertValidType( typeName, userClasses ):
             raise ValueError("The type of a list can only be a non-list primitive type.")
         return
     # Else invalid type.
-    raise ValueError("Unknown field type '%s', it should either be a primitive type or \
-        a user defined class." % typeName)
+    raise ValueError("Unknown field type " + typeName + ", it should either be a primitive type " + \
+        "or a user defined class.")
 
 def _assertValidClass( c, userClasses ):
     # Verify that every field in the class follows the spec
@@ -232,18 +232,14 @@ def _assertValidClass( c, userClasses ):
             if isPrimitive(field.typeName):
                 # a list can only be the last field on a line
                 if isList(field.typeName) and ( index + 1 ) < len(line):
-                    raise ValueError("Format error in user defined class '%s': list can only be the \
-                        last field on a line." % c.name)
+                    raise ValueError("Format error in user defined class '%s': list can only be the last field on a line." % c.name)
             else:
                 if field.typeName not in userClasses:
-                    raise ValueError("Format error in user defined class '%s': unknown field type '%s', \
-                        all types must be either primitive type or a already defined user class."
+                    raise ValueError("""Format error in user defined class '%s': unknown field type '%s', all types must be either primitive type or a already defined user class."""
                         % ( c.name, field.typeName ))
                 # There is more than one field on this line
                 if len(line) > 1:
-                    raise ValueError("Format error in user defined class '%s': unexpected field \
-                        type '%s', there can be exactly one field with user defined class as type in \
-                        each line." % ( c.name, field.tpyName))
+                    raise ValueError("Format error in user defined class '%s': unexpected field type '%s', there can be exactly one field with user defined class as type in each line." % ( c.name, field.tpyName))
 
 def getFormat(fileName):
     from parser import HeimerFormatFileParser
