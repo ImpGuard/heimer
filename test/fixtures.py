@@ -214,14 +214,17 @@ def getTest( expectedOutcome, formatFileName, mainFunctionFileName, inputFileNam
     meanings.
     """
     testDirectory = join( "test", "tests" )
+    formatDirectory = join( testDirectory, "format" )
+    mainFileDirectory = join( testDirectory, "main" )
+
     if expectedOutcome == 0:
         testDirectory = join( testDirectory, "pass" )
     else:
         testDirectory = join( testDirectory, "fail" )
     return (
         expectedOutcome,
-        join(testDirectory, formatFileName),
-        join(testDirectory, mainFunctionFileName),
+        join(formatDirectory, formatFileName),
+        join(mainFileDirectory, mainFunctionFileName),
         join(testDirectory, inputFileName),
         join(testDirectory, solutionFileName)
         )
