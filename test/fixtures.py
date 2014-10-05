@@ -61,7 +61,7 @@ class GeneratorFixture:
         def insertedMainFunction(self):
             mainFile = open( mainFunctionFileName, "r" )
             for line in mainFile:
-                self.output.writeLine(line)
+                self.output.writeLine(line.rstrip())
             self.output.writeNewline()
             mainFile.close()
 
