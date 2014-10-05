@@ -6,8 +6,8 @@ str_array:list(string):3
 
 
 
-a:int b:bool int_array:list(int)
 lol:list(string):0
+a:int b:bool int_array:list(int)
 
 # EXAMPLE INPUT
 # 3
