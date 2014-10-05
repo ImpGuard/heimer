@@ -18,16 +18,20 @@ referred to.
     ( Format File ) => | Heimer Script | => ( Parser )
     ( Input File  ) => | Parser | => ( User Actions )
 
-* **Format File**: This file specifies the format of the file that the Parser
-  being generated will is required to parse.
-* **Heimer Script**: The script that will generate a parser from the provided
-  Format File.
-* **Parser**: The generated parser in a particular language. It should be able
-  to parse files of the format specified in the Format File.
-* **Input File**: The input file to the Parser. The Parser should be able to
-  parse this file and run any additional user code.
-* **User Actions**: Any actions that additional user code within the Parser
-  take.
+**Format File**:  
+This file specifies the format of the file that the Parser being generated will is required to parse.
+
+**Heimer Script**:  
+The script that will generate a parser from the provided Format File.
+
+**Parser**:  
+The generated parser in a particular language. It should be able to parse files of the format specified in the Format File.
+
+**Input File**:  
+The input file to the Parser. The Parser should be able to parse this file and run any additional user code.
+
+**User Actions**:  
+Any actions that additional user code within the Parser take.
 
 Format File format
 ==================
@@ -54,26 +58,17 @@ corresponding information under each tag.
 The \<head\> tag
 ==============
 
-The <head> tag contains Heimer-specific options and flags. The supported flags
-are noted here:
+The \<head\> tag contains Heimer-specific options and flags. The supported flags are noted here:
 
-delimiter "<string>"
+delimiter "[string]"
 -------------------
 This sets the delimiter string used throughout the parser. For instance,
 
     <head>
     delimiter ","
 
-sets the global delimiter as a single comma
-
-For now, the <head> tag only includes a delimiter option, which tells Heimer
-what symbol(s) to use when delimiting items in a single line. For instance,
-
-    <head>
-    delimiter ","
-
-sets the global delimiter as a single comma, so the line 0,1,2,3 will be
-tokenized as ["0", "1", "2", "3"].
+sets the global delimiter as a single comma, so a line 0,1,2,3 will be tokenized as ["0", "1", "2",
+"3"].
 
 The <options> tag
 =================
