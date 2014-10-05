@@ -35,19 +35,19 @@ Format File format
 The Format File consists of 4 tags, enclosed by angled brackets, and the
 corresponding information under each tag.
 
-**\<head\>**
+**\<head\>**  
     Contains Heimer-specific options and flags.
 
-**\<options\>**
+**\<options\>**  
     Contains the command-line options that the generated Parser will be able to
     handle.
 
-**\<objects\>**
+**\<objects\>**  
     Specifies different object formats. Each object will be represented as a
     class in the Parser and will be parsed according to the format specified in
     this section.
 
-**\<body\>**
+**\<body\>**  
     Specifies the format for the entire input file in terms of the objects
     specified under the **\<objects\>** tag, or with primitive data types.
 
