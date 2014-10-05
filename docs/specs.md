@@ -94,7 +94,7 @@ lets the script know that -c is a command line option that is followed by an
 store the result in a global variable called `count`.
 
 The \<objects\> tag
-================
+===================
 
 Information under the **\<objects\>** tag denotes how particular lines in the
 Input File will be parsed into objects in the generated Parser. These
@@ -234,186 +234,114 @@ object.
 **WARNING**: A line with a field with this repetition string may only contain one field
 ! If there is more than one it will be a Format File error!
 
-Parsing some points
--------------------
+Newline between repetitive lines
+--------------------------------
 
-Suppose the goal is to parse an input file that is a simple list of 3D points. A
-sample objec
+A simple tweak to the above syntax allows the generated Parser to expect a
+newline BETWEEN repeated lines. For example, suppose the same `Path` object was
+being parsed, but a newline was expected between each point. A valid format
+would be:
 
-where CLASS_NAME is a string indicating the name of a class, VARIABLE_NAME
-is the name of a variable, and PRIMITIVE_TYPE is one of int, string, bool,
-list(int), list(bool), or list(string). For instance,
-
-    <single>
-    Point2D
+    <object>
+    Point
         x:int y:int
-    Point3D
-        x:int y:int z:int
+    Path
+        points:Point:*!
 
-will generate two classes: Point2D and Point3D, the first of which has
-integer x and y values, and the second of which has integer x, y and
-z values.
-
-When the generated parser sees the line 1 2 3, it will parse it into a
-Point3D object with the fields set as x = 1, y = 2, and z = 3.
-Similarly, when the generated parser sees the line 4 5, it will parse it as a
-Point2D with fields x = 4 and y = 5.
-
-The <multiple> tag
-==================
-
-Information under the <multiple> tag denotes how multiple lines are parsed into
-objects. These specifications follow the format:
-
-    <multiple>
-    CLASS_NAME
-        VARIABLE_NAME:TYPE(:LINE_SPECIFIER)
-        VARIABLE_NAME:TYPE(:LINE_SPECIFIER)
-        (...and so on...)
-    CLASS_NAME
-        (...and so on...)
-
-Just as before, CLASS_NAME is a string indicating the name of a class and
-VARIABLE_NAME specifies the name of a field of type TYPE. However, under
-the <multiple tag>, TYPE is not restricted to only PRIMITIVE_TYPE -- a
-TYPE can also be any abstract CLASS_NAME already specified previously in
-the <multiple> tag or anywhere in the <single> tag.
-
-TYPE is either a primitive type or a previously named class. The optional
-LINE_SPECIFIER after the TYPE specifies the number of TYPE instances we
-expect this class to contain. This NUMBER can either be a raw integer
-literal, a previously defined integer variable, or one of "+" or "*". "+"
-denotes that one or more TYPEs must be parsed, and "*" allows for any
-number (including none) to be parsed. These operators are greedy, and will
-continue parsing until it reaches the end of file, or an item that
-cannot be parsed as a TYPE.
-
-Additionally, appending "!" to the end of the LINE_SPECIFIER lets Heimer know that
-there is an extra newline character ("\n") between each parsed item. Lets consider
-the following example, where a Point2D is an "x y" pair on a single line.
-
-Lets consider the following example, where a Point2D is an "x y" pair on a
-single line (as defined in the <single> example above).
-
-    <multiple>
-    Line2D
-        p1:Point2D
-        p2:Point2D
-    Path2D
-        lines:Line2D:+!
-
-In this case, a Path2D has a collection of Line2D that consists of at least 1
-line, as denoted by the "+". Additionally, each Line2D is separated by an
-additional newline character, as denoted by the "!". Thus, the following would
-parse as a Path2D with 3 lines:
-
-    0 0
-    1 2
+Note the `!` after the "repetition string". Therefore, the generated Parser
+would recognize this input as a `Path` object:
 
     1 2
-    4 0
 
-    4 0
-    2 1
+    3 4
 
-The resulting parser would ultimately create a Path2D object containing a
-collection (dependent on the language) of Line2D objects, each of which would
-contain the corresponding p1 and p2 Point2D objects and their x, y values.
+    5 6
 
-    Path2D
-        Line2D
-            p1
-                x = 0
-                y = 0
-            p2
-                x = 1
-                y = 2
-        Line2D
-            p1
-                x = 1
-                y = 2
-            p2
-                x = 4
-                y = 0
-        Line2D
-            p1
-                x = 4
-                y = 0
-            p2
-                x = 2
-                y = 1
+But only the first point in this input:
 
-The <body> tag
-==============
+    1 2
+    3 4
+    5 6
 
-The body tag describes the overall layout of the input file, in terms of both
-primitives and classes specified in the previous sections. Information under the
-<body> tag follows this format:
+Since the parser would expect a newline after parsing the first point.
+
+The \<body\> tag
+================
+
+The **\<body\>** tag is identical to the objects tag, except that it defines
+only one object, the **Body** object. Therefore, each line under this tag is
+simply a line format of the same style as those under objects in the **\<object
+\>** tag. When the generated Parser starts to parse an input file, it would
+expect the input file to have the overall format of the lines under the
+**\<body\>** tag.
+
+Comments
+========
+
+Comments are allowed in the Format File. Comments are preceded with the `#`
+symbol. Anything after a `#` is ignored in the Format File.
+
+Examples
+========
+
+A couple of examples are listed here showcasing the abilities of the Heimer
+Script and the flexibility of the Format File.
+
+Graph Parser
+------------
+
+    # Parses an input file listing several graphs
+
+    <head>
+    delimiter ","
+
+    <objects>
+    Adjacency
+        vertex:int neighbors:list(int)
+
+    Graph
+        name:string
+        adjacencies:Adjacency:+
 
     <body>
-    VARIABLE_NAME:TYPE(:LINE_SPECIFIER)
-    VARIABLE_NAME:TYPE(:LINE_SPECIFIER)
-    (...and so on...)
+    graphs:Graph:+!
 
-where VARIABLE_NAME is a string indicating the name of a global variable in the
-generated code that will be used to store the data. As with the <multiple> tag, the
-TYPE specifies the type of the variable. Again, if the variable should contain
-multiple instances of the type, the LINE_SPECIFIER denotes how many instances to
-parse. Additionally, newline characters between lines in the <body> tag denote that
-an additional newline separates lists of items.
+The generated Parser can parse inputs such as this:
 
-Lets consider the following input file format, where there are two "sections": the
-number of 2D points followed by the coordinates of the 2D points, each on a separate
-line, and then the number of 3D points, followed by the coordinates of the 3D points,
-each on a separate line. An additional newline separates these two sections. An input
-file might look like this:
+    simple_graph
+    0,1,2,3
+    1,0
+    2,0,3
+    3,0,2
 
-    2
-    1 3
-    3 7
+    unconnected_graph
+    0,2,3
+    1
+    2,0,3,4,5
+    3,0,2
+    4,2,5
+    5,2,4
+
+Which will generate two `Graph` objects stored in `Body.graphs`. Each graph has
+a name as well as a list of `Adjacency` objects which stores a vertex and its
+neighbors.
+
+Parsing words
+-------------
+
+    # Parses a file a known number of lines of words
+    <body>
+    count:int
+    lines:list(string):count
+
+The generated Parser can parse inputs such as this:
 
     3
-    1 6 4
-    1 8 8
-    1 7 0
+    all your base
+    belongs
+    to us
 
-Note that there is an additional newline between "3 7" and "3". Thus, a newline must
-be added between the declaration of 2D points and 3D points. We would use the
-following Heimer specification:
+Which will store `3` in `Body.count` and the various lines in `Body.lines`. Each
+line contains a list of strings for the various words. Note that the above
+syntax varies depending on the language the generated Parser is in.
 
-    <body>
-    numPoints2D:int
-    points2d:Point2D:numPoints2D
-
-    numPoints3D:int
-    points3d:Point3D:numPoints3D
-
-The final parsed values for the given input file would be the following:
-
-    numPoints2D = 2
-
-    points2d = [
-        Point2D
-            x = 1
-            y = 3
-        Point2D
-            x = 3
-            y = 7
-    ]
-
-    numPoints3D = 2
-
-    points3d = [
-        Point3D
-            x = 1
-            y = 6
-            z = 4
-        Point3D
-            x = 1
-            y = 8
-            z = 8
-        Point3D
-            x = 1
-            y = 7
-            z = 0
-    ]
