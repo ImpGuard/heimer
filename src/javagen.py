@@ -221,7 +221,6 @@ class JavaGenerator(CodeGenerator):
                 # Save initial position
                 writeLine("prevFilePos = getFilePointer(f);")
                 writeLine("prevLineNumber = lineNumber[0];")
-                writeLine(line)
                 # Begin infinite loop
                 self._beginBlock("while (true)")
                 # Main handler
