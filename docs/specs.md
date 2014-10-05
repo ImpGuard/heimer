@@ -82,8 +82,8 @@ the generated program. Each line under the <options> tag must be of the format
 
     FLAG_CHAR ARG_NAME PRIMITIVE_TYPE
 
-where FLAG is the flag designating the command line option, ARG_NAME is the
-variable name used to store the value, and PRIMITIVE_TYPE is one of int, bool
+where `FLAG` is the flag designating the command line option, `ARG_NAME` is the
+variable name used to store the value, and `PRIMITIVE_TYPE` is one of int, bool
 or string. For instance,
 
     <options>
@@ -110,8 +110,8 @@ specifications follow the format:
         LINE2
         ...
 
-where OBJECT#_NAME is a string indicating the name of a particular object and
-LINE# are the different line formats that forms this object. 
+where `OBJECT#_NAME` is a string indicating the name of a particular object and
+`LINE#` are the different line formats that forms this object. 
 
 A line format follows this basic format:
 
