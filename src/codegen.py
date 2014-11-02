@@ -4,9 +4,12 @@ from os.path import dirname, basename, join
 class CodeGenerator:
     """ Base class for generating the parser code. Subclass this for every language supported by Heimer. """
 
+    # Namespace
+    PARSER_NAME = "Heimer"
+
     # Filenames
-    UTIL_FILE_NAME = "HeimerUtil"
-    DATA_FILE_NAME = "HeimerData"
+    UTIL_FILE_NAME = PARSER_NAME + "Util"
+    DATA_FILE_NAME = PARSER_NAME + "Data"
 
     # Used variable names
     USER_ARGS = "userArgs"
