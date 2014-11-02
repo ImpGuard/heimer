@@ -131,14 +131,14 @@ public static long getFilePointer(RandomAccessFile f)
 }
 """
 
-    helpers = helpers.replace("javagenParseInt", CodeGenerator.PARSE_INT)
-    helpers = helpers.replace("javagenParseBool", CodeGenerator.PARSE_BOOL)
-    helpers = helpers.replace("javagenParseString", CodeGenerator.PARSE_STRING)
-    helpers = helpers.replace("javagenParseFloat", CodeGenerator.PARSE_FLOAT)
     helpers = helpers.replace("javagenParseIntList", CodeGenerator.PARSE_INT_LIST)
     helpers = helpers.replace("javagenParseBoolList", CodeGenerator.PARSE_BOOL_LIST)
     helpers = helpers.replace("javagenParseStringList", CodeGenerator.PARSE_STRING_LIST)
     helpers = helpers.replace("javagenParseFloatList", CodeGenerator.PARSE_FLOAT_LIST)
+    helpers = helpers.replace("javagenParseInt", CodeGenerator.PARSE_INT)
+    helpers = helpers.replace("javagenParseBool", CodeGenerator.PARSE_BOOL)
+    helpers = helpers.replace("javagenParseString", CodeGenerator.PARSE_STRING)
+    helpers = helpers.replace("javagenParseFloat", CodeGenerator.PARSE_FLOAT)
 
     # Replace the tabs with the appropriate amount of indent spaces
     helpers = helpers.replace( "\t", HeimerFile.indentString )
