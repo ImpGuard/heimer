@@ -35,7 +35,7 @@ public static String javagenParseString(String s, int[] lineNumber)
 \treturn s;
 }
 
-public static float parseFloat(String s, int[] lineNumber)
+public static float javagenParseFloat(String s, int[] lineNumber)
 {
 \ttry
 \t{
