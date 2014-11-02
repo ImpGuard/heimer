@@ -30,11 +30,13 @@ public static boolean javagenParseBool(String s, int[] lineNumber)
 \t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as bool\");
 }
 
-public static String javagenParseString(String s, int[] lineNumber)  {
+public static String javagenParseString(String s, int[] lineNumber)
+{
 \treturn s;
 }
 
-public static float parseFloat(String s, int[] lineNumber) {
+public static float parseFloat(String s, int[] lineNumber)
+{
 \ttry
 \t{
 \t\treturn Float.parseFloat(s);
