@@ -2,7 +2,7 @@ from parser import HeimerFormatFileParser
 from converter import HeimerFormat
 from pygen import PythonGenerator
 from javagen import JavaGenerator
-# from cgen import CGenerator
+from cppgen import CPPGenerator
 
 from sys import exit
 from optparse import OptionParser
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     elif options.language == "java":
         generator = JavaGenerator(options.outputName, formatObject)
     elif options.language == "c++":
-        generator = CGenerator(options.outputName, formatObject)
+        generator = CPPGenerator(options.outputName, formatObject)
     else:
         print "language not supported."
         exit(1)
