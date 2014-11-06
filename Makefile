@@ -14,6 +14,9 @@ checkpython:
 checkjava:
 	@$(test) tests/javagen_test.py
 
+checkcpp:
+	@$(test) tests/cppgen_test.py
+
 clean:
 	@rm -rf tests/*.pyc src/*.pyc test_tmp out.py
 
