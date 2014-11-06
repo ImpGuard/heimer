@@ -3,13 +3,22 @@ from src.pygen import PythonGenerator
 from src.cppgen import CPPGenerator
 from src.parser import HeimerFormatFileParser
 from src.converter import HeimerFormat
-from helper import *
 
 from os import chdir, getcwd, mkdir
 from os.path import dirname, basename, join, isdir
+from subprocess import Popen, PIPE
 from shutil import rmtree
 import difflib
 import types
+
+def runShellCommand(command):
+    """ Runs an arbitrary shell command.
+
+    Returns a tuple containing (STDOUT-output, STDERR-output, return code).
+    """
+    pipe = Popen( command, stdout=PIPE, stderr=PIPE )
+    out, err = pipe.communicate()
+    return out, err, pipe.returncode
 
 class GeneratorFixture:
 
