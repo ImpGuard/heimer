@@ -10,7 +10,7 @@ class JavaGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        self.output.setExtension("java")
+        self.main.setExtension("java")
         self.util.setExtension("java")
         self.classFiles = []
 
@@ -19,7 +19,7 @@ class JavaGenerator(CodeGenerator):
         self.generateClasses()
         self.generateUtilFile()
         self.generateMainFile()
-        self.output.save()
+        self.main.save()
         self.util.save()
         map(lambda c: c.save(), self.classFiles)
 
@@ -293,7 +293,7 @@ class JavaGenerator(CodeGenerator):
 
     def generateMainFile(self):
         """ Generate main file where the main function resides. """
-        self.currentFile = self.output
+        self.currentFile = self.main
         self.generateMainFileHeader()
         self._beginBlock("public class " + splitext(basename(self.currentFile.filename))[0])
         self.generateHelpMessage()
@@ -417,8 +417,8 @@ class JavaGenerator(CodeGenerator):
 
         # Catch block
         self._beginBlock("catch (NumberFormatException e)")
-        self.output.writeLine("System.err.println(USAGE);")
-        self.output.writeLine("System.exit(1);")
+        self.main.writeLine("System.err.println(USAGE);")
+        self.main.writeLine("System.exit(1);")
         self._endBlock()
 
         # generate code for returning the filename

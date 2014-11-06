@@ -32,7 +32,7 @@ class CodeGenerator:
     def __init__( self, filename, format ):
         self.foldername = dirname(filename)
         self.filename = basename(filename)
-        self.output = HeimerFile(filename)
+        self.main = HeimerFile(filename)
         self.util = HeimerFile(join(self.foldername, CodeGenerator.UTIL_FILE_NAME))
         self.data = HeimerFile(join(self.foldername, CodeGenerator.DATA_FILE_NAME))
         self.format = format
@@ -60,7 +60,7 @@ class CodeGenerator:
         self.generateDataFile()
         self.generateUtilFile()
         self.generateMainFile()
-        self.output.save()
+        self.main.save()
         self.util.save()
         self.data.save()
 
@@ -131,7 +131,7 @@ class CodeGenerator:
 
     def generateMainFile(self):
         """ Generate main file where the main function resides. """
-        self.currentFile = self.output
+        self.currentFile = self.main
         self.generateMainFileHeader()
         self.generateOptionVariables()
         self.generateOptionParserFunction()
