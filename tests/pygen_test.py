@@ -1,14 +1,10 @@
-from fixtures import *
-from nose.tools import *
+from testSuite import getTests
+from fixtures import checkTest
 
-import sys, os
-
-tests = [
-    getTest(0, "graph", ".py", 1)
-]
+from fixtures import PythonFixture
 
 def testPyGen():
-    fixture = PythonFixture(tests)
+    fixture = PythonFixture(getTests(".py"))
     testGenerator = fixture.generateTests()
     for test in testGenerator:
         yield checkTest, test

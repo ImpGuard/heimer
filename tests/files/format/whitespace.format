@@ -1,0 +1,39 @@
+# Checking if whitespace and
+# newlines are handled appropriately
+# by the generated parser.
+<objects>
+Complex
+    a:int
+
+    b:int
+<body>
+
+
+numbers:Complex:*!
+
+# EXAMPLE INPUT
+# =============
+# 1
+#
+# 3
+#
+# 5
+#
+# 7
+#
+# 4
+#
+# 5
+
+# SOLUTION EXPLANATION
+# ====================
+# Print out each number on a separate line.
+#
+# EXAMPLE
+# =======
+# 1
+# 3
+# 5
+# 7
+# 4
+# 5

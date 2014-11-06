@@ -1,12 +1,10 @@
-from fixtures import *
-from nose.tools import *
+from testSuite import getTests
+from fixtures import checkTest
 
-tests = [
-    getTest(0, "graph", ".java", 1)
-]
+from fixtures import JavaFixture
 
 def testJavaGen():
-    fixture = JavaFixture(tests)
+    fixture = JavaFixture(getTests(".java"))
     testGenerator = fixture.generateTests()
     for test in testGenerator:
         yield checkTest, test

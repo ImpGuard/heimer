@@ -1,12 +1,10 @@
-from fixtures import *
-from nose.tools import *
+from testSuite import getTests
+from fixtures import checkTest
 
-tests = [
-    getTest(0, "graph", ".cpp", 1)
-]
+from fixtures import CPPFixture
 
 def testCPPGen():
-    fixture = CPPFixture(tests)
+    fixture = CPPFixture(getTests(".cpp"))
     testGenerator = fixture.generateTests()
     for test in testGenerator:
         yield checkTest, test
