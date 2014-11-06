@@ -10,7 +10,7 @@ class CPPGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        self.output.setExtension("cpp")
+        self.main.setExtension("cpp")
         self.util.setExtension("h")
         self.data.setExtension("h")
 
@@ -69,7 +69,7 @@ class CPPGenerator(CodeGenerator):
         self.currentFile.writeNewline()
 
         # Import data header
-        self.currentFile.writeLine("#include \"" + self.data.filename + "\"")
+        self.currentFile.writeLine("#include \"" + CodeGenerator.DATA_FILE_NAME + ".h" + "\"")
 
     def generateHelperFunctions(self):
         """ For generating the helper functions that will be useful when parsing in the util file. """
@@ -295,7 +295,7 @@ class CPPGenerator(CodeGenerator):
 
     def generateMainFile(self):
         """ Generate main file where the main function resides. """
-        self.currentFile = self.output
+        self.currentFile = self.main
         self.generateMainFileHeader()
         self.generateHelpMessage()
         self.generateOptionVariables()
@@ -316,8 +316,8 @@ class CPPGenerator(CodeGenerator):
         self.currentFile.writeLine("#include <iostream>")
         self.currentFile.writeNewline()
         # Import data and util headers
-        self.currentFile.writeLine("#include \"" + self.data.filename + "\"")
-        self.currentFile.writeLine("#include \"" + self.util.filename + "\"")
+        self.currentFile.writeLine("#include \"" + CodeGenerator.DATA_FILE_NAME + ".h" + "\"")
+        self.currentFile.writeLine("#include \"" + CodeGenerator.UTIL_FILE_NAME + ".h" + "\"")
         self.currentFile.writeNewline()
 
     def generateForwardDeclarations(self):
@@ -384,7 +384,9 @@ class CPPGenerator(CodeGenerator):
         if len(self.format.commandLineOptions()) == 0:
             # Just handle extraneous inputs
             self._beginBlock("void " + CodeGenerator.PARSE_OPTIONS + "(std::vector<std::string> args)")
-            self.currentFile.writeLine(CodeGenerator.USER_ARGS + " = args[i];")
+            self._beginBlock("for ( int i = 0; i < args.size(); i++ )")
+            self.currentFile.writeLine(CodeGenerator.USER_ARGS + ".push_back(args[i]);")
+            self._endBlock()
             self._endBlock()
             return
 
@@ -428,8 +430,8 @@ class CPPGenerator(CodeGenerator):
 
         # Catch block
         self._beginBlock("catch (const invalid_argument& e)")
-        self.output.writeLine("cerr << USAGE << endl;")
-        self.output.writeLine("exit(1);")
+        self.main.writeLine("cerr << USAGE << endl;")
+        self.main.writeLine("exit(1);")
         self._endBlock()
 
         # generate code for returning the filename

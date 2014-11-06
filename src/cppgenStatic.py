@@ -22,11 +22,11 @@ inline std::string trim(std::string s, std::string t = ws)
     return ltrim(rtrim(s, t), t);
 }
 
-std::vector<std::string> copyRange(std::vector<std::string> v, int begin, int length)
+std::vector<std::string> copyRange(std::vector<std::string> v, int begin, int end)
 {
     using namespace std;
     vector<string>::const_iterator first = v.begin() + begin;
-    vector<string>::const_iterator last = v.begin() + begin + length;
+    vector<string>::const_iterator last = v.begin() + end;
     return vector<string>(first, last);
 }
 

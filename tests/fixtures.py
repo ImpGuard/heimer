@@ -1,5 +1,6 @@
 from src.javagen import JavaGenerator
 from src.pygen import PythonGenerator
+from src.cppgen import CPPGenerator
 from src.parser import HeimerFormatFileParser
 from src.converter import HeimerFormat
 from helper import *
@@ -61,8 +62,8 @@ class GeneratorFixture:
         def insertedMainFunction(self):
             mainFile = open( mainFunctionFileName, "r" )
             for line in mainFile:
-                self.output.writeLine(line.rstrip())
-            self.output.writeNewline()
+                self.currentFile.writeLine(line.rstrip())
+            self.currentFile.writeNewline()
             mainFile.close()
 
         generator.generateMainFunction = types.MethodType(insertedMainFunction, generator, self.generatorType)
@@ -205,55 +206,77 @@ class PythonFixture(GeneratorFixture):
         chdir(prevWD)
         return out, err, rc == 0
 
-def getTest( expectedOutcome, formatFileName, mainFunctionFileName = "", inputFileName = "", solutionFileName = "" ):
-    """ Get a test in the standard test directory.
+class CPPFixture(GeneratorFixture):
 
-    If the expected outcome is 0, the test will be located in the pass
-    directory, otherwise, it will be located in the "fail" directory.  See
-    GeneratorFixture for a list of different expected outcome values and their
-    meanings.
-    """
-    testDirectory = join( "tests", "files" )
-    formatDirectory = join( testDirectory, "format" )
-    mainFileDirectory = join( testDirectory, "main" )
+    def __init__( self, tests ):
+        GeneratorFixture.__init__( self, CPPGenerator, "cpp", tests)
 
-    if expectedOutcome == 0:
-        testDirectory = join( testDirectory, "pass" )
-    else:
-        testDirectory = join( testDirectory, "fail" )
-    return (
-        expectedOutcome,
-        join(formatDirectory, formatFileName),
-        join(mainFileDirectory, mainFunctionFileName),
-        join(testDirectory, inputFileName),
-        join(testDirectory, solutionFileName)
-        )
+    def compile(self):
+        prevWD = getcwd()
+        chdir(self.mainFileDirname)
+        out, err, rc = runShellCommand([ "g++", self.mainFileBasename ])
+        chdir(prevWD)
+        return out, err, rc == 0
 
-def getTestByName( expectedOutcome, testName, extension ):
+    def run( self, inputFileName ):
+        prevWD = getcwd()
+        chdir(self.mainFileDirname)
+        out, err, rc = runShellCommand([ "./a.out", join( "..", inputFileName ) ])
+        chdir(prevWD)
+        return out, err, rc == 0
+
+def getTest( expectedOutcome, testName, extension, number, **kwargs ):
     """ Get a test assuming the standard naming scheme.
 
-    Tests under the standard scheme are located in the standard test directory
-    in either the pass or fail directory depending on whether or not the test
-    is supposed to pass or not.
+    The result will be a tuple. The 5 elements of the tuple are:
+        expectedOutcome
+        formatFileName - <testName> + ".format"
+        mainFunctionFileName - <testName> + <extension>
+        inputFileName - <testName> + <number> + ".input"
+        solutionFileName - <testName> + <number> + ".sln"
 
-    Arguments:
-    expectedOutcome -- A value indicating the expected outcome for the test.
-    testName -- The name of the test. The resulting filenames will be created
-        by joining this name with an appropriate extension:
-        <testName>.format = format file
-        <testName>.<extension> = main function file
-        <testName>.input = input file
-        <testName.sln = solution file
-    extension -- The name of the extension for the test main function file.
-        Ideally this would be the extension for the language the main function
-        file is written in.
+    Each test will also be concatenated with a directory. The general directory
+    structure is:
+        tests/files/[pass|fail|main|format]/<fileName>
+
+    Format files will by default be looked for in the "format" directory and main
+    files will by default be looked for in the "main" directory. If the expected
+    outcome is 0, the input files and the solution files will be located in the
+    "pass" directory, otherwise, it will be located in the "fail" directory.
+    See GeneratorFixture for a list of different expected outcome values and
+    their meanings.
+
+    In order to adjust these directories, pass in the following key arguments:
+        globalDir - change the globalDirectory [default: tests/files]
+        formatDir - change where to look for format files [default: format]
+        mainDir - change where to look for main function files [default: main]
+        passDir - change where to look for input/solution files that have an
+            expected outcome of 0 [default: pass]
+        failDir - change where to look for input/solution files that have an
+            expected outcome of not 0 [default: fail]
+        inputDir - change where to look for input files within the pass/fail
+            directory [default: ""]
+        solutionDir - change where to look for solution files within the pass/fail
+            directory [default: ""]
     """
-    return getTest(
+    globalDir = kwargs.get( "globalDir", join( "tests", "files" ) )
+    formatDir = kwargs.get( "formatDir", "format" )
+    mainDir = kwargs.get( "mainDir", "main" )
+    passDir = kwargs.get( "passDir", "pass" )
+    failDir = kwargs.get( "failDir", "fail" )
+    inputDir = kwargs.get( "inputDir", "" )
+    solutionDir = kwargs.get( "solutionDir", "" )
+    passOrFailDir = passDir if expectedOutcome == 0 else failDir
+
+    if extension.find(".") == -1:
+        extension = "." + extension
+
+    return (
         expectedOutcome,
-        testName + ".format",
-        testName + "." + extension,
-        testName + ".input",
-        testName + ".sln"
+        join(globalDir, formatDir, testName + ".format"),
+        join(globalDir, mainDir, testName + extension),
+        join(globalDir, passOrFailDir, inputDir, testName + str(number) + ".input"),
+        join(globalDir, passOrFailDir, solutionDir, testName + str(number) + ".sln")
         )
 
 def teardownTest():
