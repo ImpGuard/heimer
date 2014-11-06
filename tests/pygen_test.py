@@ -4,14 +4,7 @@ from nose.tools import *
 import sys, os
 
 tests = [
-    getTestByName(0, "image", "py"),
-    getTest(0, "vector.format", "vector.py", "vector_pass1.input", "vector_pass1.sln"),
-    getTest(0, "vector.format", "vector.py", "vector_pass2.input", "vector_pass2.sln"),
-    getTest(0, "vector.format", "vector.py", "vector_pass3.input", "vector_pass3.sln"),
-    getTest(0, "vector.format", "vector.py", "vector_pass4.input", "vector_pass4.sln"),
-    getTest(4, "vector.format", "vector.py", "vector_fail1.input"),
-    getTest(4, "vector.format", "vector.py", "vector_fail2.input"),
-    getTest(0, "everything.format", "everything.py", "everything_pass1.input", "everything_pass1.sln")
+    getTest(0, "graph", ".py", 1)
 ]
 
 def testPyGen():
