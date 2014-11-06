@@ -1,0 +1,49 @@
+# Very basic format checking for all the
+# base functionality of the parser without
+# consideration of special edge cases.
+<head>
+delimiter ","
+
+<objects>
+Adjacency
+    vertex:int neighbors:list(int)
+Graph
+    name:string
+    adjacencies:Adjacency:+
+<body>
+graphs:Graph:+!
+
+# EXAMPLE INPUT
+# =============
+# simple_graph
+# 0,1,2,3
+# 1,0
+# 2,0,3
+# 3,0,2
+#
+# unconnected_graph
+# 0,2,3
+# 1
+# 2,0,3,4,5
+# 3,0,2
+# 4,2,5
+# 5,2,4
+
+# SOLUTION EXPLANATION
+# ====================
+# Print out the name of each graph and the sum of each set of numbers per line.
+#
+# EXAMPLE
+# =======
+# simple_graph
+# 6
+# 1
+# 5
+# 5
+# unconnected_graph
+# 5
+# 1
+# 14
+# 5
+# 11
+# 11
