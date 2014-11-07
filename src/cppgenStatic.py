@@ -48,11 +48,12 @@ std::vector<std::string> split(std::string s, std::string delim) {
 std::string lowercase(std::string &s)
 {
     using namespace std;
-    char result[s.length()];
+    char result[s.length() + 1];
     for (unsigned int i = 0; i < s.length(); i++)
     {
         result[i] = tolower(s[i]);
     }
+    result[s.length()] = NULL;
     return string(result);
 }
 

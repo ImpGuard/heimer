@@ -552,7 +552,10 @@ class CPPGenerator(CodeGenerator):
             typeName = field.typeName()
 
         if field.isRepeating():
-            return "std::vector<" + typeName + ">"
+            space = ""
+            if isList(field.typeName()):
+                space = " "
+            return "std::vector<" + typeName + space + ">"
         else:
             return typeName
 
