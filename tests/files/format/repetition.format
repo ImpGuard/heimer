@@ -1,0 +1,41 @@
+# Testing various types of repetition.
+<objects>
+FourNumbers
+    numbers:int:4
+VariableNumbers
+    count:int
+    numbers:int:count
+OneOrMoreNumbers
+    numbers:int:+
+SomeNumbers
+    numbers:int:*
+<body>
+a:FourNumbers
+b:VariableNumbers
+c:OneOrMoreNumbers
+
+d:SomeNumbers
+
+# EXAMPLE INPUT
+# =============
+# 1
+# 2
+# 3
+# 4
+# 2
+# 1
+# 2
+# 1
+# 3
+#
+# 2
+# 2
+# 2
+
+# SOLUTION EXPLANATION
+# ====================
+# Sum up each set of numbers (ignore the count number) and print out the product of them all
+#
+# EXAMPLE
+# =======
+# 720

@@ -1,0 +1,10 @@
+# Should error due to the typo on the head tag
+<heed>
+delimiter:","
+
+<objects>
+complex:
+    a:int
+    b:int
+<body>
+n:complex:+

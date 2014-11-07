@@ -1,0 +1,4 @@
+<objects>
+Person
+    name:string
+    age:int
