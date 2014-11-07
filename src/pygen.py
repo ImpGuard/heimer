@@ -90,7 +90,7 @@ class PythonGenerator(CodeGenerator):
                 "should be.' % (currentLineNumber))")
             self.endBlock()
             self.writeLine("currentLineNumber += 1")
-            self.writeLine("currentLinePos = inputFile")
+            self.writeLine("currentLinePos = inputFile.tell()")
 
         def handleSimpleLine(line):
             # The case where there is only one primitve field that is not a list.
