@@ -285,7 +285,7 @@ class PythonGenerator(CodeGenerator):
         """ For generating the function to parse an input file. """
         self.beginBlock("def %s( inputFile ):" % CodeGenerator.PARSE_INPUT)
         self.beginBlock("try:")
-        self.writeLine("body, lineNumber, linePos = %s.%s( inputFile, 0, 0 )" % ( CodeGenerator.UTIL_FILE_NAME, self.typeNameToParseFuncName[self.bodyTypeName] ))
+        self.writeLine("body, lineNumber, linePos = %s.%s( inputFile, 1, 0 )" % ( CodeGenerator.UTIL_FILE_NAME, self.typeNameToParseFuncName[self.bodyTypeName] ))
 
         self.writeLine("line = inputFile.readline()")
         self.beginBlock("while line != '':")
@@ -296,7 +296,7 @@ class PythonGenerator(CodeGenerator):
         self.writeLine("lineNumber += 1")
         self.writeLine("line = inputFile.readline()")
         self.endBlock()
-        
+
 
         self.writeLine("return body")
         self.endBlock()

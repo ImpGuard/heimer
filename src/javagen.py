@@ -439,7 +439,7 @@ class JavaGenerator(CodeGenerator):
             + " " + CodeGenerator.PARSE_INPUT + "(RandomAccessFile f)")
 
         # Setup line number
-        writeLine("int[] lineNumber = {0};")
+        writeLine("int[] lineNumber = {1};")
 
         # Main try block
         self._beginBlock("try")
