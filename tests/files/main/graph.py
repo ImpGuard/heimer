@@ -1,5 +1,5 @@
 if __name__ == "__main__":
-    body = run(sys.argv)
+    body = parse(sys.argv[1])
     for graph in body.graphs:
         print graph.name
         for adjacency in graph.adjacencies:

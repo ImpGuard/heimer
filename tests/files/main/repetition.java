@@ -1,6 +1,6 @@
 public static void main(String[] args)
 {
-    Body body = run(args);
+    Body body = parse(args[0]);
 
     int result = 1;
     int total = 0;

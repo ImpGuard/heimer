@@ -1,5 +1,5 @@
 if __name__ == "__main__":
-    body = run(sys.argv)
+    body = parse(sys.argv[1])
     print sum(body.numbers)
     print ("T" if body.z else "F")
     for s_list in body.str_array:

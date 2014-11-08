@@ -1,6 +1,6 @@
 public static void main(String[] args)
 {
-    Body body = run(args);
+    Body body = parse(args[0]);
 
     for (Complex x : body.numbers)
     {

@@ -1,8 +1,7 @@
 int main(int argc, char** argv)
 {
     using namespace std;
-    Body body;
-    run(argc, argv, body);
+    Body body = parse(argv[1]);
 
     for (int i = 0; i < body.graphs.size(); i++)
     {
