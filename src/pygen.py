@@ -29,8 +29,10 @@ class PythonGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        self.util.filename += ".py"
-        self.data.filename += ".py"
+        HeimerFile.commentString = "#"
+        self.main.setExtension("py")
+        self.util.setExtension("py")
+        self.data.setExtension("py")
 
     ################################################################################
     # Generate Data File
@@ -244,49 +246,21 @@ class PythonGenerator(CodeGenerator):
         """ For generating the main file header, such as the import statements. """
         self.writeLine("#!/usr/bin/env python")
         self.writeNewline()
-        self.writeImportLine("import " + CodeGenerator.UTIL_FILE_NAME)
-        self.writeLine("from optparse import OptionParser")
-        self.writeImportLine("import sys")
-        self.writeNewline()
-
-    def generateOptionVariables(self):
-        """ Generate global option variables that will be initialized when parsing. """
-        self.writeLine("%s = None" % CodeGenerator.USER_ARGS)
-        for opt in self.format.commandLineOptions():
-            self.writeLine("%s = None" % opt.variableName)
-        self.writeNewline()
-
-
-    def generateOptionParserFunction(self):
-        """ For generating the function to parse command line options. """
-        self.beginBlock("def %s(commandLineArguments):" % CodeGenerator.PARSE_OPTIONS)
-        self.comment("A function for parsing command line arguments. The options will be stored in")
-        self.comment("global variables, while the left over positional arguments are stored in the")
-        self.comment("global variable %s." % CodeGenerator.USER_ARGS)
-
-        options = self.format.commandLineOptions()
-        self.writeLine("USAGE = 'usage: %prog [options] input_file_name'")
-        self.writeLine("optParser = OptionParser(usage = USAGE)")
-
-        variableNames = []
-        for opt in options:
-            variableNames.append(opt.variableName)
-            self.writeLine("optParser.add_option('-%s', action='store', dest='%s')" %
-                ( opt.flagName, opt.variableName ))
-        self.writeLine("global %s" % CodeGenerator.USER_ARGS)
-        self.writeLine("( options, %s ) = optParser.parse_args(commandLineArguments)" % CodeGenerator.USER_ARGS)
-        if len(variableNames) > 0:
-            self.writeLine("global " + ", ".join(variableNames))
-            map( lambda name: self.writeLine("%s = options.%s" % ( name, name )), variableNames )
-        self.endBlock()
+        self.writeLine("import " + CodeGenerator.UTIL_FILE_NAME)
+        self.writeLine("import sys")
         self.writeNewline()
 
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
-        self.beginBlock("def %s( inputFile ):" % CodeGenerator.PARSE_INPUT)
-        self.beginBlock("try:")
-        self.writeLine("body, lineNumber, linePos = %s.%s( inputFile, 1, 0 )" % ( CodeGenerator.UTIL_FILE_NAME, self.typeNameToParseFuncName[self.bodyTypeName] ))
+        self.beginBlock("def %s( filename ):" % CodeGenerator.PARSE_INPUT)
 
+        self.beginBlock("try:")
+        # Open file
+        self.writeLine("inputFile = open(filename, 'r')")
+        # Parse file
+        self.writeLine("body, lineNumber, linePos = %s.%s( inputFile, 1, 0 )"
+            % ( CodeGenerator.UTIL_FILE_NAME, self.typeNameToParseFuncName[self.bodyTypeName] ))
+        # Handle trailing newlines
         self.writeLine("line = inputFile.readline()")
         self.beginBlock("while line != '':")
         self.beginBlock("if line.strip() != '':")
@@ -297,39 +271,25 @@ class PythonGenerator(CodeGenerator):
         self.writeLine("line = inputFile.readline()")
         self.endBlock()
 
-
         self.writeLine("return body")
         self.endBlock()
 
-        self.beginBlock("except ValueError as e:")
-        self.writeLine("sys.stderr.write(str(e))")
-        self.writeLine("exit(1)")
-        self.endBlock()
-        self.beginBlock("except EOFError as e:")
-        self.writeLine("sys.stderr.write('Parser Error: Reached end of file before finished parsing.')")
-        self.writeLine("exit(1)")
-        self.endBlock()
-
-        self.endBlock()
-        self.writeNewline()
-
-    def generateRunFunction(self):
-        """ For generating the function that will be called by the user. """
-        self.beginBlock("def %s(commandLineArguments):" % CodeGenerator.RUN)
-        self.writeLine("%s(commandLineArguments[1:])" % CodeGenerator.PARSE_OPTIONS)
-        self.beginBlock("try:")
-        self.beginBlock("if len(%s) == 0:" % CodeGenerator.USER_ARGS)
-        self.writeLine("sys.stderr.write('Parser Error: Require input file name.')")
-        self.writeLine("exit(1)")
-        self.endBlock()
-        self.writeLine("filename = %s[0]" % CodeGenerator.USER_ARGS)
-        self.writeLine("inputFile = open(filename, 'r')")
-        self.writeLine("return %s(inputFile)" % CodeGenerator.PARSE_INPUT)
-        self.endBlock()
+        # Catch File IO errors
         self.beginBlock("except IOError as e:")
         self.writeLine("sys.stderr.write('Parser Error: Problem opening file, %s' % e)" )
         self.writeLine("exit(1)")
         self.endBlock()
+        # Catch parser errors
+        self.beginBlock("except ValueError as e:")
+        self.writeLine("sys.stderr.write(str(e))")
+        self.writeLine("exit(1)")
+        self.endBlock()
+        # Catch end of file errors
+        self.beginBlock("except EOFError as e:")
+        self.writeLine("sys.stderr.write('Parser Error: Reached end of file before finished parsing.')")
+        self.writeLine("exit(1)")
+        self.endBlock()
+        # Catch all other errors
         self.beginBlock("except Exception as e:")
         self.writeLine("sys.stderr.write('Parser Error: %s' % e)")
         self.writeLine("import traceback")
@@ -343,6 +303,7 @@ class PythonGenerator(CodeGenerator):
     def generateMainFunction(self):
         """ For generating the empty main method that the user can fill in. """
         self.beginBlock("if __name__ == '__main__':")
-        self.writeLine("body = %s(sys.argv)" % CodeGenerator.RUN)
+        self.currentFile.comment("Call " + CodeGenerator.PARSE_INPUT + "(filename) to parse the file of that name.")
+        self.writeLine("pass")
         self.endBlock()
 

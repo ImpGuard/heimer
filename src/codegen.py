@@ -25,9 +25,7 @@ class CodeGenerator:
     PARSE_STRING_LIST = "parseStringList"
     PARSE_FLOAT_LIST = "parseFloatList"
     PARSE_NEWLINE = "parseNewline"
-    PARSE_OPTIONS = "parseOptions"
-    PARSE_INPUT = "parseInput"
-    RUN = "run"
+    PARSE_INPUT = "parse"
 
     def __init__( self, filename, format ):
         self.foldername = dirname(filename)
@@ -133,30 +131,15 @@ class CodeGenerator:
         """ Generate main file where the main function resides. """
         self.currentFile = self.main
         self.generateMainFileHeader()
-        self.generateOptionVariables()
-        self.generateOptionParserFunction()
         self.generateInputParserFunction()
-        self.generateRunFunction()
         self.generateMainFunction()
 
     def generateMainFileHeader(self):
         """ For generating the main file header, such as the import statements. """
         raise NotImplementedError()
 
-    def generateOptionVariables(self):
-        """ Generate global option variables that will be initialized when parsing. """
-        raise NotImplementedError()
-
-    def generateOptionParserFunction(self):
-        """ For generating the function to parse command line options. """
-        raise NotImplementedError()
-
     def generateInputParserFunction(self):
         """ For generating the function to parse an input file. """
-        raise NotImplementedError()
-
-    def generateRunFunction(self):
-        """ For generating the function that will be called by the user. """
         raise NotImplementedError()
 
     def generateMainFunction(self):

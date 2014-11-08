@@ -10,6 +10,7 @@ class JavaGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
+        HeimerFile.commentString = "//"
         self.main.setExtension("java")
         self.util.setExtension("java")
         self.classFiles = []
@@ -296,11 +297,7 @@ class JavaGenerator(CodeGenerator):
         self.currentFile = self.main
         self.generateMainFileHeader()
         self._beginBlock("public class " + splitext(basename(self.currentFile.filename))[0])
-        self.generateHelpMessage()
-        self.generateOptionVariables()
         self.generateMainFunction()
-        self.generateRunFunction()
-        self.generateOptionParserFunction()
         self.generateInputParserFunction()
         self._endBlock()
 
@@ -314,120 +311,10 @@ class JavaGenerator(CodeGenerator):
         self.currentFile.writeLine("import java.io.EOFException;")
         self.currentFile.writeNewline()
 
-    def generateOptionVariables(self):
-        """ Generate global option variables that will be initialized when parsing. """
-        self.currentFile.writeLine("public static ArrayList<String> "+ CodeGenerator.USER_ARGS +" = new ArrayList<String>();")
-
-        if len(self.format.commandLineOptions()) == 0:
-            return
-
-        options = self.format.commandLineOptions()
-        for option in options:
-            self.currentFile.writeLine("public static " + self._getBasicTypeName(option.optionType) + " " + option.variableName + ";")
-        self.currentFile.writeNewline()
-
-    def generateHelpMessage(self):
-        # Create option parser and generate helpMessage strings
-        optParse = OptionParser(usage = "usage: %prog [options] input_file_name")
-        for option in self.format.commandLineOptions():
-            optParse.add_option( "-" + option.flagName, action="store", dest = option.variableName,
-                    help = "<Insert your help message here>")
-
-        helpMessageList = optParse.format_help().strip().splitlines()
-        if len(helpMessageList) == 0:
-            return
-
-        # Condense newlines and store result in helpMessage
-        helpMessage = []
-        for helpString in helpMessageList:
-            if helpString == "":
-                helpMessage[-1] += "\\n"
-                continue
-            helpMessage.append(helpString)
-
-        # Generate the help message multiline string
-        self.currentFile.write("public static String USAGE = \"" + helpMessage[0] + "\\n\"")
-        for index, helpString in enumerate(helpMessage[1:]):
-            self.currentFile.writeNewline()
-            if index == 0:
-                self.currentFile.indent()
-            self.currentFile.write(" + \"" + helpString + "\\n\"")
-        self.currentFile.writeLine(";")
-
-        if len(helpMessage) > 1:
-            self.currentFile.dedent()
-
-        self.currentFile.writeNewline()
-
     def generateMainFunction(self):
         """ For generating the empty main method that the user can fill in. """
         self._beginBlock("public static void main(String[] args)")
-        self.currentFile.writeLine(self.bodyTypeName + " " + CodeGenerator.PARSED_OBJ + " = "
-            + CodeGenerator.RUN + "(args);")
-        self._endBlock()
-        self.currentFile.writeNewline()
-
-    def generateOptionParserFunction(self):
-        """ For generating the function to parse command line options. """
-        if len(self.format.commandLineOptions()) == 0:
-            # Just handle extraneous inputs
-            self._beginBlock("private static void " + CodeGenerator.PARSE_OPTIONS + "(String[] args)")
-            self._beginBlock("for ( int i = 0; i < args.length; i++ )")
-            self.currentFile.writeLine(CodeGenerator.USER_ARGS + ".add(args[i]);")
-            self._endBlock()
-            self._endBlock()
-            return
-
-        writeLine = self.currentFile.writeLine
-        options = self.format.commandLineOptions()
-
-        # Create helper for code generation
-        def handleOption( option, typeOfIf ):
-            self._beginBlock(typeOfIf + " (args[i].equals(\"-" + option.flagName + "\"))")
-            if isBool(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_BOOL + "(args[i + 1], fakeLineNumber);")
-            elif isInteger(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_INT + "(args[i + 1], fakeLineNumber);")
-            elif isFloat(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_FLOAT + "(args[i + 1], fakeLineNumber);")
-            else:
-                writeLine(option.variableName + " = " + CodeGenerator.UTIL_FILE_NAME + "." + CodeGenerator.PARSE_STRING + "(args[i + 1], fakeLineNumber);")
-            writeLine("i += 1;")
-            self._endBlock()
-
-        # Create option parser function
-        self._beginBlock("private static void " + CodeGenerator.PARSE_OPTIONS + "(String[] args)")
-        self._beginBlock("try")
-        writeLine("int[] fakeLineNumber = {-1};")
-        self._beginBlock("for ( int i = 0; i < args.length; i++ )")
-
-        # generate code for handling each option type
-        handleOption(options[0], "if")
-        map( lambda opt: handleOption(opt, "else if"), options[1:] )
-
-        # generate code for handling extraneous inputs
-        self._beginBlock("else")
-        writeLine(CodeGenerator.USER_ARGS + ".add(args[i]);")
-        self._endBlock()
-
-        # End of for loop
-        self._endBlock()
-        # End of try block
-        self._endBlock()
-
-        # Catch block
-        self._beginBlock("catch (NumberFormatException e)")
-        self.main.writeLine("System.err.println(USAGE);")
-        self.main.writeLine("System.exit(1);")
-        self._endBlock()
-
-        # generate code for returning the filename
-        self._beginBlock("if (" + CodeGenerator.USER_ARGS + ".size() == 0)")
-        writeLine("System.err.println(USAGE);")
-        writeLine("System.exit(1);")
-        self._endBlock()
-
-        # End of function
+        self.currentFile.comment("Call " + CodeGenerator.PARSE_INPUT + "(filename) to parse the file of that name.")
         self._endBlock()
         self.currentFile.writeNewline()
 
@@ -436,80 +323,55 @@ class JavaGenerator(CodeGenerator):
         writeLine = self.currentFile.writeLine
         # Begin function declaration
         self._beginBlock("private static " + self.bodyTypeName
-            + " " + CodeGenerator.PARSE_INPUT + "(RandomAccessFile f)")
-
-        # Setup line number
-        writeLine("int[] lineNumber = {1};")
+            + " " + CodeGenerator.PARSE_INPUT + "(String filename)")
 
         # Main try block
         self._beginBlock("try")
+        # Initial setup
+        writeLine("RandomAccessFile f = new RandomAccessFile(filename, \"r\");")
+        writeLine("int[] lineNumber = {1};")
+        # Begin parsing
         writeLine(self.bodyTypeName + " result = "
-            + CodeGenerator.UTIL_FILE_NAME + ".parse" + self.bodyTypeName + "(f, lineNumber);")
+            + CodeGenerator.UTIL_FILE_NAME + "." + self.typeNameToParseFuncName[self.bodyTypeName] + "(f, lineNumber);")
+        # Handle trailing newlines
         writeLine("String line;")
         self._beginBlock("while ((line = f.readLine()) != null)")
         self._beginBlock("if (!line.equals(\"\"))")
         writeLine("throw new RuntimeException(\"Parser Error: Did not reach end of file\");")
         self._endBlock()
         self._endBlock()
+        # Finish up
+        writeLine("f.close();")
         writeLine("return result;")
         self._endBlock()
 
-        # Begin catch end of file
+        # Catch end of file
         self._beginBlock("catch (EOFException e)")
         writeLine("System.err.println(\"Parser Error: Reached end of file before finished parsing\");")
         writeLine("System.exit(1);")
         self._endBlock()
-
-        # Begin other exception catches
+        # Catch file not found
+        self._beginBlock("catch (FileNotFoundException e)")
+        writeLine("System.err.println(\"Input file '\" + filename + \"' not found\");")
+        writeLine("System.exit(1);")
+        self._endBlock()
+        # Catch random IOExceptions
+        self._beginBlock("catch (IOException e)")
+        writeLine("System.err.println(\"Could not open '\" + filename + \"'\");")
+        self._endBlock()
+        # All other exception catches
         self._beginBlock("catch (Exception e)")
         writeLine("System.err.println(e.getMessage());")
         writeLine("System.exit(1);")
         self._endBlock()
 
+        # Should never reach this line
+        writeLine("System.err.println(\"Unknown error occurred\");")
+        writeLine("System.exit(1);")
         writeLine("return null;")
 
         # End function declaration
         self._endBlock()
-
-    def generateRunFunction(self):
-        """ For generating the function that will be called by the user. """
-        writeLine = self.currentFile.writeLine
-
-        self._beginBlock("public static " + self.bodyTypeName + " "
-            + CodeGenerator.RUN + "(String[] args)")
-
-        # Parse Options
-        self.currentFile.writeLine(CodeGenerator.PARSE_OPTIONS + "(args);")
-
-        # Parse input file if it exists
-        self._beginBlock("if (" + CodeGenerator.USER_ARGS + ".size() != 0)")
-        writeLine("String filename = " + CodeGenerator.USER_ARGS + ".get(0);")
-        # Try to parse the file
-        self._beginBlock("try")
-        writeLine("RandomAccessFile f = new RandomAccessFile(filename, \"r\");")
-        writeLine(self.bodyTypeName + " result = " + CodeGenerator.PARSE_INPUT + "(f);")
-        writeLine("f.close();")
-        writeLine("return result;")
-        self._endBlock()
-        # File not found!
-        self._beginBlock("catch (FileNotFoundException e)")
-        writeLine("System.err.println(\"Input file '\" + filename + \"' not found\");")
-        writeLine("System.exit(1);")
-        self._endBlock()
-        self._beginBlock("catch (IOException e)")
-        writeLine("System.err.println(\"Could not open '\" + filename + \"'\");")
-        self._endBlock()
-        self._endBlock()
-        # Otherwise error
-        self._beginBlock("else")
-        writeLine("System.err.println(USAGE);");
-        writeLine("System.exit(1);")
-        self._endBlock()
-
-        writeLine("return null;")
-
-        self._endBlock()
-        self.currentFile.writeNewline()
 
     ################################################################################
     # Helper Functions

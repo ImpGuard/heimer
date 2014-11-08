@@ -10,6 +10,7 @@ class CPPGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
+        HeimerFile.commentString = "//"
         self.main.setExtension("cpp")
         self.util.setExtension("h")
         self.data.setExtension("h")
@@ -297,14 +298,9 @@ class CPPGenerator(CodeGenerator):
         """ Generate main file where the main function resides. """
         self.currentFile = self.main
         self.generateMainFileHeader()
-        self.generateHelpMessage()
-        self.generateOptionVariables()
         self.generateForwardDeclarations()
         self.generateMainFunction()
-        self.generateRunFunction()
-        self.generateOptionParserFunction()
         self.generateInputParserFunction()
-
 
     def generateMainFileHeader(self):
         """ For generating the main file header, such as the import statements. """
@@ -321,126 +317,13 @@ class CPPGenerator(CodeGenerator):
         self.currentFile.writeNewline()
 
     def generateForwardDeclarations(self):
-        self.currentFile.writeLine("bool " + CodeGenerator.RUN + "(int, char**, " + self.bodyTypeName + "&);")
-        self.currentFile.writeLine("void " + CodeGenerator.PARSE_OPTIONS + "(std::vector<std::string>);")
-        self.currentFile.writeLine("bool " + CodeGenerator.PARSE_INPUT + "(std::ifstream&, " + self.bodyTypeName + "&);")
-        self.currentFile.writeNewline()
-
-    def generateHelpMessage(self):
-        # Create option parser and generate helpMessage strings
-        optParse = OptionParser(usage = "usage: ./scriptname [options] input_file_name")
-        for option in self.format.commandLineOptions():
-            optParse.add_option( "-" + option.flagName, action="store", dest = option.variableName,
-                    help = "<Insert your help message here>")
-
-        helpMessageList = optParse.format_help().strip().splitlines()
-        if len(helpMessageList) == 0:
-            return
-
-        # Condense newlines and store result in helpMessage
-        helpMessage = []
-        for helpString in helpMessageList:
-            if helpString == "":
-                helpMessage[-1] += "\\n"
-                continue
-            helpMessage.append(helpString)
-
-        # Generate the help message multiline string
-        self.currentFile.write("std::string USAGE = \"" + helpMessage[0] + "\\n\"")
-        for index, helpString in enumerate(helpMessage[1:]):
-            self.currentFile.writeNewline()
-            if index == 0:
-                self.currentFile.indent()
-            self.currentFile.write("\"" + helpString + "\\n\"")
-        self.currentFile.writeLine(";")
-
-        if len(helpMessage) > 1:
-            self.currentFile.dedent()
-
-        self.currentFile.writeNewline()
-
-    def generateOptionVariables(self):
-        """ Generate global option variables that will be initialized when parsing. """
-        self.currentFile.writeLine("std::vector<std::string> "+ CodeGenerator.USER_ARGS +";")
-
-        if len(self.format.commandLineOptions()) == 0:
-            return
-
-        options = self.format.commandLineOptions()
-        for option in options:
-            self.currentFile.writeLine(self._getBasicTypeName(option.optionType) + " " + option.variableName + ";")
+        self.currentFile.writeLine(self.bodyTypeName + " " + CodeGenerator.PARSE_INPUT + "(const std::string &filename);")
         self.currentFile.writeNewline()
 
     def generateMainFunction(self):
         """ For generating the empty main method that the user can fill in. """
         self._beginBlock("int main(int argc, char** argv)")
-        self.currentFile.writeLine(self.bodyTypeName + " " + CodeGenerator.PARSED_OBJ + ";")
-        self.currentFile.writeLine(CodeGenerator.RUN + "(argc, argv, " + CodeGenerator.PARSED_OBJ + ");")
-        self._endBlock()
-        self.currentFile.writeNewline()
-
-    def generateOptionParserFunction(self):
-        """ For generating the function to parse command line options. """
-        if len(self.format.commandLineOptions()) == 0:
-            # Just handle extraneous inputs
-            self._beginBlock("void " + CodeGenerator.PARSE_OPTIONS + "(std::vector<std::string> args)")
-            self._beginBlock("for ( int i = 0; i < args.size(); i++ )")
-            self.currentFile.writeLine(CodeGenerator.USER_ARGS + ".push_back(args[i]);")
-            self._endBlock()
-            self._endBlock()
-            return
-
-        writeLine = self.currentFile.writeLine
-        options = self.format.commandLineOptions()
-
-        # Create helper for code generation
-        def handleOption( option, typeOfIf ):
-            self._beginBlock(typeOfIf + " (args[i].compare(\"-" + option.flagName + "\") == 0)")
-            if isBool(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.PARSER_NAME + "::" + CodeGenerator.PARSE_BOOL + "(args[i + 1], fakeLineNumber);")
-            elif isInteger(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.PARSER_NAME + "::" + CodeGenerator.PARSE_INT + "(args[i + 1], fakeLineNumber);")
-            elif isFloat(option.optionType):
-                writeLine(option.variableName + " = " + CodeGenerator.PARSER_NAME + "::" + CodeGenerator.PARSE_FLOAT + "(args[i + 1], fakeLineNumber);")
-            else:
-                writeLine(option.variableName + " = " + CodeGenerator.PARSER_NAME + "::" + CodeGenerator.PARSE_STRING + "(args[i + 1], fakeLineNumber);")
-            writeLine("i += 1;")
-            self._endBlock()
-
-        # Create option parser function
-        self._beginBlock("void " + CodeGenerator.PARSE_OPTIONS + "(std::vector<std::string> args)")
-        writeLine("using namespace std;")
-        self._beginBlock("try")
-        writeLine("int fakeLineNumber = -1;")
-        self._beginBlock("for ( int i = 0; i < args.size(); i++ )")
-
-        # generate code for handling each option type
-        handleOption(options[0], "if")
-        map( lambda opt: handleOption(opt, "else if"), options[1:] )
-
-        # generate code for handling extraneous inputs
-        self._beginBlock("else")
-        writeLine(CodeGenerator.USER_ARGS + ".push_back(args[i]);")
-        self._endBlock()
-
-        # End of for loop
-        self._endBlock()
-        # End of try block
-        self._endBlock()
-
-        # Catch block
-        self._beginBlock("catch (const invalid_argument& e)")
-        self.main.writeLine("cerr << USAGE << endl;")
-        self.main.writeLine("exit(1);")
-        self._endBlock()
-
-        # generate code for returning the filename
-        self._beginBlock("if (" + CodeGenerator.USER_ARGS + ".size() == 0)")
-        writeLine("cerr << USAGE << endl;")
-        writeLine("exit(1);")
-        self._endBlock()
-
-        # End of function
+        self.currentFile.comment("Call " + CodeGenerator.PARSE_INPUT + "(filename) to parse the file of that name.")
         self._endBlock()
         self.currentFile.writeNewline()
 
@@ -448,86 +331,59 @@ class CPPGenerator(CodeGenerator):
         """ For generating the function to parse an input file. """
         writeLine = self.currentFile.writeLine
         # Begin function declaration
-        self._beginBlock("bool " + CodeGenerator.PARSE_INPUT + "(std::ifstream &f, " + self.bodyTypeName + " &result)")
+        self._beginBlock(self.bodyTypeName + " " + CodeGenerator.PARSE_INPUT + "(const std::string &filename)")
         writeLine("using namespace std;")
 
-        # Setup line number
-        writeLine("int lineNumber = 1;")
+        # Open file
+        writeLine("ifstream f(filename.c_str(), ios_base::in);")
+        self._beginBlock("if (f.fail())")
+        writeLine("cerr << \"Could not open '\" + filename + \"'\" << endl;")
+        writeLine("exit(1);")
+        self._endBlock()
 
         # Main try block
         self._beginBlock("try")
-        writeLine("result = " + CodeGenerator.PARSER_NAME + "::parse" + self.bodyTypeName + "(f, lineNumber);")
+        # Initial setup
+        writeLine("int lineNumber = 1;")
+        writeLine(self.bodyTypeName + " result = "
+            + CodeGenerator.PARSER_NAME + "::" + self.typeNameToParseFuncName[self.bodyTypeName] + "(f, lineNumber);")
+        # Handle trailing newlines
         writeLine("string line;")
         self._beginBlock("while (getline(f, line))")
         self._beginBlock("if (!" + CodeGenerator.PARSER_NAME + "::trim(line).compare(\"\") == 0)")
         writeLine("throw runtime_error(\"Parser Error: Did not reach end of file\");")
         self._endBlock()
         self._endBlock()
-        writeLine("return true;")
+        writeLine("return result;")
         self._endBlock()
 
-        # Begin catch end of file
+        # Catch end of file
         self._beginBlock("catch (int e)")
         writeLine("cerr << \"Parser Error: Reached end of file before finished parsing\";")
         writeLine("exit(1);")
         self._endBlock()
-
-        # Begin other exception catches
+        # Catch parser errors
         self._beginBlock("catch (invalid_argument& ia)")
         writeLine("cerr << ia.what() << endl;")
         writeLine("exit(1);")
         self._endBlock()
+        # Catch parser errors
         self._beginBlock("catch (runtime_error& re)")
         writeLine("cerr << re.what() << endl;")
         writeLine("exit(1);")
         self._endBlock()
+        # Catch all other errors
+        self._beginBlock("catch (...)")
+        writeLine("cerr << \"Unknown error occurred\" << endl;")
+        writeLine("exit(1);")
+        self._endBlock()
 
+        # Should never reach this line
         writeLine("cerr << \"Unknown error occurred\" << endl;")
         writeLine("exit(1);")
 
         # End function declaration
         self._endBlock()
-
-    def generateRunFunction(self):
-        """ For generating the function that will be called by the user. """
-        writeLine = self.currentFile.writeLine
-
-        self._beginBlock("bool " + CodeGenerator.RUN + "(int argc, char** argv, " + self.bodyTypeName + "& result)")
-
-        writeLine("using namespace std;")
-
-        # Convert argv to a vector
-        writeLine("vector<string> args;")
-        self._beginBlock("for (int i = 1; i < argc; i++)")
-        writeLine("args.push_back(string(argv[i]));")
-        self._endBlock()
-
-        # Parse Options
-        writeLine(CodeGenerator.PARSE_OPTIONS + "(args);")
-
-        # Parse input file if it exists
-        self._beginBlock("if (" + CodeGenerator.USER_ARGS + ".size() != 0)")
-        writeLine("string filename = " + CodeGenerator.USER_ARGS + "[0];")
-        # Try to parse the file
-        writeLine("ifstream f(filename.c_str(), ios_base::in);")
-        self._beginBlock("if (f.fail())")
-        writeLine("cerr << \"Could not open '\" + filename + \"'\" << endl;")
-        self._endBlock()
-        writeLine(CodeGenerator.PARSE_INPUT + "(f, result);")
-        writeLine("f.close();")
-        writeLine("return true;")
-        # File not found!
-        self._endBlock()
-        # Otherwise error
-        self._beginBlock("else")
-        writeLine("cerr << USAGE << endl;");
-        writeLine("exit(1);")
-        self._endBlock()
-
-        writeLine("return false;")
-
-        self._endBlock()
-        self.currentFile.writeNewline()
 
     ################################################################################
     # Helper Functions
