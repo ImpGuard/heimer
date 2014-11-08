@@ -2,9 +2,8 @@ import re
 from util import StringConstants
 
 class RegexPatterns:
-    """ Patterns used for parsing. Except when parsing options, names are considered simple words with underscores. """
+    """ Patterns used for parsing. Names are considered simple words with underscores. """
     DELIMITER = re.compile(r"^delimiter\s+\"(.+)\"\s*(#.*)?$")
-    OPTION = re.compile(r"^([\w]+)\s+([\w]+)\s+([\w]+)$")
     CLASS_NAME = re.compile(r"^[\w_]+$")
     FIELD = re.compile(r"^([\w_]+):(" + StringConstants.LIST_TYPE + r"\s*\(\s*([\w_]+)\s*\)|[\w_]+)(:([\w_]+|\+|\*)(\!)?)?\s*")
 
@@ -49,16 +48,6 @@ class ParserUtil:
             return []
         return fields
 
-class CommandLineOption:
-
-    def __init__( self, flagName, variableName, optionType ):
-        self.flagName = flagName
-        self.variableName = variableName
-        self.optionType = optionType
-
-    def __str__(self):
-        return str(( self.flagName, self.variableName, str(self.optionType) ))
-
 class FieldDeclaration:
 
     def __init__( self, name, typeName ):
@@ -97,16 +86,11 @@ class FormatFileObjectModel:
         self.classes = []
         self.body = FieldDeclaration("body", "Body")
 
-    def addCommandLineOption( self, flagName, variableName, optionType ):
-        self.commandLineOptions.append(CommandLineOption( flagName, variableName, optionType ))
-
     def addClass( self, inputClass ):
         self.classes.append(inputClass)
 
     def __str__(self):
         result = ""
-        if len(self.commandLineOptions):
-            result += str([ str(option) for option in self.commandLineOptions ]) + "\n"
         if len(self.classes) > 0:
             result += ParserUtil.classDeclarationsAsString(self.classes) + "\n"
         return result[:-1]
@@ -133,7 +117,6 @@ class HeimerFormatFileParser:
 
     def parseAllTags(self):
         self.parseHeadTag()
-        self.parseOptionsTag()
         self.parseObjectsTag()
         self.parseBodyTag()
 
@@ -149,20 +132,6 @@ class HeimerFormatFileParser:
             if delimiterMatchResults is None:
                 return self.pushFailureMessage( "Expected delimiter declaration.", lineMarker )
             self.objectModel.lineDelimiter = delimiterMatchResults.group(1)
-
-    def parseOptionsTag(self):
-        if StringConstants.OPTIONS_TAG not in self.tagLineMarkerIntervals:
-            return
-        optionsTagBeginMarker, optionsTagEndMarker = self.tagLineMarkerIntervals[StringConstants.OPTIONS_TAG]
-        for lineMarker in xrange( optionsTagBeginMarker + 1, optionsTagEndMarker ):
-            currentStrippedLine = ParserUtil.stripCommentsAndWhitespaceFromLine(self.formatInputAsLines[lineMarker])
-            if not currentStrippedLine:
-                continue
-            optionsMatchResults = RegexPatterns.OPTION.match(currentStrippedLine)
-            if optionsMatchResults is None:
-                return self.pushFailureMessage( "Expected command line option.", lineMarker )
-            optionType = optionsMatchResults.group(3)
-            self.objectModel.addCommandLineOption( optionsMatchResults.group(1), optionsMatchResults.group(2), optionType )
 
     def parseObjectsTag(self):
         if StringConstants.OBJECTS_TAG not in self.tagLineMarkerIntervals:

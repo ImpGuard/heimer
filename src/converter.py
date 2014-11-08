@@ -22,9 +22,6 @@ class HeimerFormat:
     def lineDelimiter(self):
         return self._model.lineDelimiter
 
-    def commandLineOptions(self):
-        return self._model.commandLineOptions
-
     def classes(self):
         """ Return a ordered dictionary with class names as keys and the corresponding list of
         FormatLine's (containing the fields on that line) as values. """
