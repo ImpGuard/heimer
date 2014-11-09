@@ -112,7 +112,7 @@ class HeimerFormatFileParser:
         if len(self.failureMessages) > 0:
             return
         if StringConstants.BODY_TAG not in self.tagLineMarkerIntervals:
-            return self.pushFailureMessage("Input file requires a body tag.")
+            return self.pushFailureMessage("Could not find the required <body> tag.")
         self.parseAllTags()
 
     def parseAllTags(self):
@@ -143,7 +143,7 @@ class HeimerFormatFileParser:
             if not currentStrippedLine:
                 continue
             if not RegexPatterns.CLASS_NAME.match(currentStrippedLine):
-                return self.pushFailureMessage( "Expected class declaration.", lineMarker )
+                return self.pushFailureMessage( "Found an invalid object declaration.", lineMarker )
             classDecl = ClassDeclaration(currentStrippedLine)
             classDeclLineMarker = lineMarker
             while lineMarker < singleTagEndMarker - 1:
@@ -157,7 +157,7 @@ class HeimerFormatFileParser:
                     break
                 fields = ParserUtil.fieldDeclarationsFromLine(currentStrippedLine)
                 if len(fields) == 0:
-                    return self.pushFailureMessage( "Expected field declaration for \"%s\"" % (classDecl.name,), classDeclLineMarker, lineMarker )
+                    return self.pushFailureMessage( "Found invalid field declarations for the object \"%s\"" % (classDecl.name,), classDeclLineMarker, lineMarker )
                 classDecl.addFieldsAsLine(fields)
             self.objectModel.addClass(classDecl)
 
@@ -175,7 +175,7 @@ class HeimerFormatFileParser:
                 continue
             fields = ParserUtil.fieldDeclarationsFromLine(currentStrippedLine)
             if len(fields) == 0:
-                return self.pushFailureMessage( "Expected field declaration for body.", lineMarker )
+                return self.pushFailureMessage( "Found invalid field declarations for the body.", lineMarker )
             body.addFieldsAsLine(fields)
             hasBegunParsingFields = True
         self.objectModel.addClass(body)
@@ -220,7 +220,7 @@ class HeimerFormatFileParser:
         if lineMarkerBegin >= len(self.formatInputAsLines):
             return self.pushFailureMessage( "Input file empty or commented out." )
         if not ParserUtil.lineStartsValidTag(self.formatInputAsLines[lineMarkerBegin]):
-            return self.pushFailureMessage( "Expected tag declaration.", lineMarkerBegin )
+            return self.pushFailureMessage( "Found an invalid tag declaration.", lineMarkerBegin )
         lastTagName = None
         while lineMarkerBegin < len(self.formatInputAsLines):
             tagName = self.formatInputAsLines[lineMarkerBegin]
