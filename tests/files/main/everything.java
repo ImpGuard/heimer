@@ -16,9 +16,9 @@ public static void main(String[] args)
     {
         System.out.println("F");
     }
-    for (ArrayList<String> s_list : body.str_array)
+    for (int i = 0; i < body.str_array.size(); i++)
     {
-        for (String s : s_list)
+        for (String s : body.str_array.get(i))
         {
             System.out.println(s);
         }
