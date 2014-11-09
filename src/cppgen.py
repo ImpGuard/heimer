@@ -21,6 +21,10 @@ class CPPGenerator(CodeGenerator):
 
     def generateDataFile(self):
         """ Generate classes in a separate data file. """
+        self.currentFile = self.data
+        self.currentFile.writeLine("#ifndef %s_H" % CodeGenerator.DATA_FILE_NAME.upper())
+        self.currentFile.writeLine("#define %s_H" % CodeGenerator.DATA_FILE_NAME.upper())
+        self.currentFile.writeNewline()
         CodeGenerator.generateDataFile(self);
         self.currentFile.writeLine("#endif")
 
@@ -28,9 +32,6 @@ class CPPGenerator(CodeGenerator):
         """ For generating the data file header, such as the import statements. """
         writeLine = self.currentFile.writeLine
         writeNewline = self.currentFile.writeNewline
-        writeLine("#ifndef %s_H" % CodeGenerator.DATA_FILE_NAME.upper())
-        writeLine("#define %s_H" % CodeGenerator.DATA_FILE_NAME.upper())
-        writeNewline()
         writeLine("#include <vector>")
         writeLine("#include <string>")
         writeNewline()
@@ -52,11 +53,14 @@ class CPPGenerator(CodeGenerator):
 
     def generateUtilFile(self):
         self.currentFile = self.util
+        self.currentFile.writeLine("#ifndef %s_H" % CodeGenerator.UTIL_FILE_NAME.upper())
+        self.currentFile.writeLine("#define %s_H" % CodeGenerator.UTIL_FILE_NAME.upper())
         self.generateUtilFileHeader()
         self._beginBlock("namespace " + CodeGenerator.PARSER_NAME)
         self.generateHelperFunctions()
         self.generateClassParserFunctions()
         self._endBlock()
+        self.currentFile.writeLine("#endif")
 
     def generateUtilFileHeader(self):
         """ For generating the util file header, such as the import statements. """
