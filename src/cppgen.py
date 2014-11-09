@@ -117,10 +117,10 @@ class CPPGenerator(CodeGenerator):
 
         def handleEmptyLine():
             # Handle the empty line case
-            self._beginBlock("if (!trim(readLine(f)).compare(\"\") == 0)")
+            self._beginBlock("if (!trim(readLine(f, \"" + className + "\")).compare(\"\") == 0)")
             writeLine("stringstream err;")
             writeLine("err << \"Parser Error on line \"  << lineNumber << " +
-                "\": Should be an empty line\";")
+                "\": Should be an empty line.\";")
             writeLine("throw invalid_argument(err.str());")
             self._endBlock()
             writeLine("lineNumber += 1;")
@@ -130,11 +130,11 @@ class CPPGenerator(CodeGenerator):
             if isSimplePrimitive(field):
                 # Field is simple, just parse it
                 writeLine("result." + field.name() + " = "
-                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f), lineNumber);")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f, \"" + className + "\"), lineNumber);")
                 writeLine("lineNumber += 1;")
             elif field.isPrimitive():
                 # Field is primitive list, split line
-                writeLine("fields = split(readLine(f), \"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = split(readLine(f, \"" + className + "\"), \"" + self.format.lineDelimiter() + "\");")
                 write("result." + field.name() + " = "
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber);")
                 writeLine("lineNumber += 1;")
@@ -167,14 +167,14 @@ class CPPGenerator(CodeGenerator):
                 handleSimpleLineOneField(line.getField(0))
             else:
                 # Multiple fields, split it
-                writeLine("fields = split(readLine(f), \"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = split(readLine(f, \"" + className + "\"), \"" + self.format.lineDelimiter() + "\");")
                 if (line.getField(-1).isList()):
                     self._beginBlock("if (fields.size() < " + str(line.numFields()) + ")")
                 else:
                     self._beginBlock("if (fields.size() != " + str(line.numFields()) + ")")
                 writeLine("stringstream err;")
                 writeLine("err << \"Parser Error on line \" << lineNumber << " +
-                    "\": Expecting " + str(line.numFields()) + " fields (\" << fields.size() << \" found)\";")
+                    "\": Expecting " + str(line.numFields()) + " fields (\" << fields.size() << \" found).\";")
                 writeLine("throw invalid_argument(err.str());")
                 self._endBlock()
                 for index, field in enumerate(line):
@@ -185,11 +185,11 @@ class CPPGenerator(CodeGenerator):
             if isSimplePrimitive(field):
                 # Field is simple, just parse it
                 writeLine("result." + field.name() + ".push_back("
-                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f), lineNumber));")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f, \"" + className + "\"), lineNumber));")
                 writeLine("lineNumber += 1;")
             elif field.isPrimitive():
                 # Field is primitive list, split line
-                writeLine("fields = split(readLine(f), \"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = split(readLine(f, \"" + className + "\"), \"" + self.format.lineDelimiter() + "\");")
                 writeLine("result." + field.name() + ".push_back("
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber));")
                 writeLine("lineNumber += 1;")
@@ -211,6 +211,8 @@ class CPPGenerator(CodeGenerator):
                     repetitionString =  "result." + line.repetitionAmountString()
                 # Begin loop
                 self._beginBlock("for (int i = 0; i < " + repetitionString + "; i++)")
+                # Wrap handler with try
+                self._beginBlock("try")
                 # Main handler
                 handleRepeatingLineForField(field)
                 # Check for newline
@@ -218,6 +220,17 @@ class CPPGenerator(CodeGenerator):
                     self._beginBlock("if (i != " + repetitionString + " - 1)")
                     handleEmptyLine()
                     self._endBlock()
+                # End try
+                self._endBlock()
+                # Catch any error to throw appropriate error message
+                self._beginBlock("catch (...)")
+                writeLine("stringstream err;")
+                writeLine("err << \"Parser Error on line \" << lineNumber << "
+                    + "\": Expecting exactly \" << " + repetitionString + " << \" \\\"" + field.typeName()
+                    + "\\\" when parsing \\\"" + className + "." + field.name()
+                    + "\\\" (\" << i << \" found).\";")
+                writeLine("throw runtime_error(err.str());")
+                self._endBlock()
                 # End loop
                 self._endBlock()
             elif line.isZeroOrMoreRepetition():
@@ -267,8 +280,10 @@ class CPPGenerator(CodeGenerator):
                 self._beginBlock("catch (...)")
                 self._beginBlock("if (!didRepeatOnce)")
                 writeLine("stringstream err;")
-                writeLine("err << \"Parser Error on line \" << lineNumber << " +
-                    "\": Expecting at least 1 " + field.typeName() + " (0 found)\";")
+                writeLine("err << \"Parser Error on line \" << lineNumber << "
+                    + "\": Expecting at least 1 \\\"" + field.typeName()
+                    + "\\\" when parsing \\\"" + className + "." + field.name()
+                    + "\\\" (0 found).\";")
                 writeLine("throw invalid_argument(err.str());")
                 self._endBlock()
                 writeLine("seek(f, prevFilePos);")
@@ -341,7 +356,7 @@ class CPPGenerator(CodeGenerator):
         # Open file
         writeLine("ifstream f(filename.c_str(), ios_base::in);")
         self._beginBlock("if (f.fail())")
-        writeLine("cerr << \"Could not open '\" + filename + \"'\" << endl;")
+        writeLine("cerr << \"Could not open \\\"\" + filename + \"\\\".\" << endl;")
         writeLine("exit(1);")
         self._endBlock()
 
@@ -355,17 +370,14 @@ class CPPGenerator(CodeGenerator):
         writeLine("string line;")
         self._beginBlock("while (getline(f, line))")
         self._beginBlock("if (!" + CodeGenerator.PARSER_NAME + "::trim(line).compare(\"\") == 0)")
-        writeLine("throw runtime_error(\"Parser Error: Did not reach end of file\");")
+        writeLine("stringstream err;");
+        writeLine("err << \"Parser Error on line\" << lineNumber << \": Finished parsing but did not reach end of file.\";")
+        writeLine("throw runtime_error(err.str());")
         self._endBlock()
         self._endBlock()
         writeLine("return result;")
         self._endBlock()
 
-        # Catch end of file
-        self._beginBlock("catch (int e)")
-        writeLine("cerr << \"Parser Error: Reached end of file before finished parsing\";")
-        writeLine("exit(1);")
-        self._endBlock()
         # Catch parser errors
         self._beginBlock("catch (invalid_argument& ia)")
         writeLine("cerr << ia.what() << endl;")
@@ -378,12 +390,12 @@ class CPPGenerator(CodeGenerator):
         self._endBlock()
         # Catch all other errors
         self._beginBlock("catch (...)")
-        writeLine("cerr << \"Unknown error occurred\" << endl;")
+        writeLine("cerr << \"Unknown error occurred.\" << endl;")
         writeLine("exit(1);")
         self._endBlock()
 
         # Should never reach this line
-        writeLine("cerr << \"Unknown error occurred\" << endl;")
+        writeLine("cerr << \"Unknown error occurred.\" << endl;")
         writeLine("exit(1);")
 
         # End function declaration

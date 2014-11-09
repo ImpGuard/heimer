@@ -64,8 +64,7 @@ class PythonGenerator(CodeGenerator):
         """ For generating the util file header, such as the import statements. """
         self.writeLine("#!/usr/bin/env python")
         self.writeNewline()
-        self.writeImportLine("import " + CodeGenerator.DATA_FILE_NAME)
-        self.writeNewline()
+        self.writeLine("import " + CodeGenerator.DATA_FILE_NAME)
 
     def generateHelperFunctions(self):
         """ For generating the helper functions that will be useful when parsing in the util file. """
@@ -86,10 +85,10 @@ class PythonGenerator(CodeGenerator):
 
         def handleEmptyLine():
             self.comment("Parsing empty line")
-            self.writeLine("fields = readline(inputFile).split()")
+            self.writeLine("fields = readline(inputFile, \"%s\").split()" % className)
             self.beginBlock("if len(fields) > 0:")
-            self.writeLine("raise ValueError('Parser Error on line %d: line is not empty when it " + \
-                "should be.' % (currentLineNumber))")
+            self.writeLine("raise ValueError(\"Parser Error on line %d: Should be an empty line.\"" + \
+                " % (currentLineNumber))")
             self.endBlock()
             self.writeLine("currentLineNumber += 1")
             self.writeLine("currentLinePos = inputFile.tell()")
@@ -98,15 +97,15 @@ class PythonGenerator(CodeGenerator):
             # The case where there is only one primitve field that is not a list.
             if line.numFields() == 1 and line.getField(0).isPrimitive() and not line.getField(0).isList():
                 field = line.getField(0)
-                self.writeLine("userClass.%s = %s( readline(inputFile), currentLineNumber )" % \
-                    ( field.name(), self.typeNameToParseFuncName[field.typeName()] ))
+                self.writeLine("userClass.%s = %s( readline(inputFile, \"%s\"), currentLineNumber )" % \
+                    ( field.name(), self.typeNameToParseFuncName[field.typeName()], className ))
                 self.writeLine("currentLineNumber += 1")
                 self.writeLine("currentLinePos = inputFile.tell()")
             # The case where ther is only one list primitive field.
             elif line.numFields() == 1 and line.getField(0).isPrimitive() and line.getField(0).isList():
                 field = line.getField(0)
                 listType = "list(%s)" % field.listType()
-                self.writeLine("fields = readline(inputFile).split('%s')" % self.format.lineDelimiter())
+                self.writeLine("fields = readline(inputFile, \"%s\").split('%s')" % (className, self.format.lineDelimiter()))
                 self.writeLine("userClass.%s = %s( fields, currentLineNumber )" % ( field.name(), self.typeNameToParseFuncName[listType] ))
                 self.writeLine("currentLineNumber += 1")
                 self.writeLine("currentLinePos = inputFile.tell()")
@@ -116,7 +115,7 @@ class PythonGenerator(CodeGenerator):
                 self.writeLine("userClass.%s, currentLineNumber, currentLinePos = %s( inputFile, currentLineNumber, currentLinePos )" % ( field.name(), self.typeNameToParseFuncName[field.typeName()] ))
             # The case where there is multiple fields on a line. The fields are all primitives.
             else:
-                self.writeLine("fields = readline(inputFile).split('%s')" % self.format.lineDelimiter())
+                self.writeLine("fields = readline(inputFile, \"%s\").split('%s')" % (className, self.format.lineDelimiter()))
                 # If the last field is not a list, then the number of fields should match exactly
                 if not line.getField(-1).isList():
                     self.beginBlock("if len(fields) != %d:" % line.numFields())
@@ -146,6 +145,8 @@ class PythonGenerator(CodeGenerator):
             self.writeLine("userClass.%s = []" % field.name())
 
             if line.isZeroOrMoreRepetition() or line.isOneOrMoreRepetition():
+                self.writeLine("prevLineNumber = currentLineNumber")
+                self.writeLine("prevLinePos = currentLinePos")
                 self.beginBlock("try:")
                 self.beginBlock("while True:")
                 # Field is an user defined class.
@@ -153,14 +154,14 @@ class PythonGenerator(CodeGenerator):
                     self.writeLine("retObj, currentLineNumber, currentLinePos = %s( inputFile, currentLineNumber, currentLinePos )" % self.typeNameToParseFuncName[field.typeName()])
                 # Field is a non-list primitive.
                 elif field.isPrimitive() and not field.isList():
-                    self.writeLine("retObj = %s( readline(inputFile), currentLineNumber )" % \
-                        self.typeNameToParseFuncName[field.typeName()])
+                    self.writeLine("retObj = %s( readline(inputFile, \"%s\"), currentLineNumber )" % \
+                        (self.typeNameToParseFuncName[field.typeName()], className))
                     self.writeLine("currentLineNumber += 1")
                     self.writeLine("currentLinePos = inputFile.tell()")
                 # Field is a list primitive.
                 else:
                     listType = "list(%s)" % field.listType()
-                    self.writeLine("fields = readline(inputFile).split(%s)" % self.format.lineDelimiter())
+                    self.writeLine("fields = readline(inputFile, \"%s\").split(%s)" % (className, self.format.lineDelimiter()))
                     self.writeLine("retObj = %s( fields, currentLineNumber )" % \
                         self.typeNameToParseFuncName[listType])
                     self.writeLine("currentLineNumber += 1")
@@ -176,8 +177,9 @@ class PythonGenerator(CodeGenerator):
                 self.beginBlock("except ( ValueError, EOFError ) as e:")
                 if line.isOneOrMoreRepetition():
                     self.beginBlock("if len(userClass.%s) < 1:" % field.name())
-                    self.writeLine("raise ValueError('Parser Error on line %d: Expecting at least 1 " + \
-                        field.typeName() + " objects (0 found)' % currentLineNumber)")
+                    self.writeLine("raise ValueError(\"Parser Error on line %d: Expecting at least 1 \\\"" + \
+                        field.typeName() + "\\\" when parsing \\\"" + className + "." + field.name() + \
+                        "\\\" (0 found).\" % currentLineNumber)")
                     self.endBlock()
                 if line.isSplitByNewline():
                     self.writeLine("currentLineNumber = prevLineNumber")
@@ -197,14 +199,14 @@ class PythonGenerator(CodeGenerator):
                     self.writeLine("retObj, currentLineNumber, currentLinePos = %s( inputFile, currentLineNumber, currentLinePos )" % self.typeNameToParseFuncName[field.typeName()])
                 # Field is a non-list primitive.
                 elif field.isPrimitive() and not field.isList():
-                    self.writeLine("retObj = %s( readline(inputFile), currentLineNumber )" % \
-                        self.typeNameToParseFuncName[field.typeName()])
+                    self.writeLine("retObj = %s( readline(inputFile, \"%s\"), currentLineNumber )" % \
+                        (self.typeNameToParseFuncName[field.typeName()], className))
                     self.writeLine("currentLineNumber += 1")
                     self.writeLine("currentLinePos = inputFile.tell()")
                 # Field is a list primitive.
                 else:
                     listType = "list(%s)" % field.listType()
-                    self.writeLine("fields = readline(inputFile).split(%s)" % self.format.lineDelimiter())
+                    self.writeLine("fields = readline(inputFile, \"%s\").split(%s)" % (className, self.format.lineDelimiter()))
                     self.writeLine("retObj = %s( fields, currentLineNumber )" % \
                         self.typeNameToParseFuncName[listType])
                     self.writeLine("currentLineNumber += 1")
@@ -217,9 +219,9 @@ class PythonGenerator(CodeGenerator):
                 self.endBlock()
 
                 self.beginBlock("except ValueError as e:")
-                self.writeLine("raise ValueError('Parser Error on line %d: Expecting %d " + \
-                    field.typeName() + " objects (%d found)' % ( currentLineNumber, " + numRepetition + \
-                        ", _index ))")
+                self.writeLine("raise ValueError('Parser Error on line %d: Expecting exactly %d \\\"" + \
+                    field.typeName() + "\\\" when parsing \\\"" + className + "." + field.name() + \
+                    "\\\" (%d found)' % ( currentLineNumber, " + numRepetition + ", _index ))")
                 self.endBlock()
 
         def handleLine(line):
@@ -264,7 +266,7 @@ class PythonGenerator(CodeGenerator):
         self.writeLine("line = inputFile.readline()")
         self.beginBlock("while line != '':")
         self.beginBlock("if line.strip() != '':")
-        self.writeLine("sys.stderr.write('Parser Error on line %d: Finished parsing but did not reach end of file.' % lineNumber)")
+        self.writeLine("sys.stderr.write(\"Parser Error on line %d: Finished parsing but did not reach end of file.\" % lineNumber)")
         self.writeLine("exit(1)")
         self.endBlock()
         self.writeLine("lineNumber += 1")
@@ -281,17 +283,12 @@ class PythonGenerator(CodeGenerator):
         self.endBlock()
         # Catch parser errors
         self.beginBlock("except ValueError as e:")
-        self.writeLine("sys.stderr.write(str(e))")
-        self.writeLine("exit(1)")
-        self.endBlock()
-        # Catch end of file errors
-        self.beginBlock("except EOFError as e:")
-        self.writeLine("sys.stderr.write('Parser Error: Reached end of file before finished parsing.')")
+        self.writeLine("sys.stderr.write(str(e) + \"\\n\")")
         self.writeLine("exit(1)")
         self.endBlock()
         # Catch all other errors
         self.beginBlock("except Exception as e:")
-        self.writeLine("sys.stderr.write('Parser Error: %s' % e)")
+        self.writeLine("sys.stderr.write('Parser Error: %s\\n' % e)")
         self.writeLine("import traceback")
         self.writeLine("traceback.print_exc()")
         self.writeLine("exit(1)")

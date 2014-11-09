@@ -113,9 +113,9 @@ class JavaGenerator(CodeGenerator):
 
         def handleEmptyLine():
             # Handle the empty line case
-            self._beginBlock("if (!readLine(f).trim().equals(\"\"))")
+            self._beginBlock("if (!readLine(f, \"" + className + "\").trim().equals(\"\"))")
             writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
-                "\": Should be an empty line\");")
+                "\": Should be an empty line.\");")
             self._endBlock()
             writeLine("lineNumber[0] += 1;")
 
@@ -124,11 +124,11 @@ class JavaGenerator(CodeGenerator):
             if isSimplePrimitive(field):
                 # Field is simple, just parse it
                 writeLine("result." + field.name() + " = "
-                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f), lineNumber);")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f, \"" + className + "\"), lineNumber);")
                 writeLine("lineNumber[0] += 1;")
             elif field.isPrimitive():
                 # Field is primitive list, split line
-                writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = readLine(f, \"" + className + "\").split(\"" + self.format.lineDelimiter() + "\");")
                 write("result." + field.name() + " = "
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber);")
                 writeLine("lineNumber[0] += 1;")
@@ -160,13 +160,13 @@ class JavaGenerator(CodeGenerator):
                 handleSimpleLineOneField(line.getField(0))
             else:
                 # Multiple fields, split it
-                writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = readLine(f, \"" + className + "\").split(\"" + self.format.lineDelimiter() + "\");")
                 if (line.getField(-1).isList()):
                     self._beginBlock("if (fields.length < " + str(line.numFields()) + ")")
                 else:
                     self._beginBlock("if (fields.length != " + str(line.numFields()) + ")")
                 writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] + " +
-                    "\": Expecting " + str(line.numFields()) + " fields (\" + fields.length + \" found)\");")
+                    "\": Expecting " + str(line.numFields()) + " fields (\" + fields.length + \" found).\");")
                 self._endBlock()
                 for index, field in enumerate(line):
                     handleSimpleLineMultipleField(index, field)
@@ -176,11 +176,11 @@ class JavaGenerator(CodeGenerator):
             if isSimplePrimitive(field):
                 # Field is simple, just parse it
                 writeLine("result." + field.name() + ".add("
-                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f), lineNumber));")
+                    + self.typeNameToParseFuncName[field.typeName()] + "(readLine(f, \"" + className + "\"), lineNumber));")
                 writeLine("lineNumber[0] += 1;")
             elif field.isPrimitive():
                 # Field is primitive list, split line
-                writeLine("fields = readLine(f).split(\"" + self.format.lineDelimiter() + "\");")
+                writeLine("fields = readLine(f, \"" + className + "\").split(\"" + self.format.lineDelimiter() + "\");")
                 writeLine("result." + field.name() + ".add("
                     + self.typeNameToParseFuncName["list(%s)" % field.listType()] + "(fields, lineNumber));")
                 writeLine("lineNumber[0] += 1;")
@@ -204,6 +204,8 @@ class JavaGenerator(CodeGenerator):
                 writeLine("result." + field.name() + " = new " + self._getTypeName(field) + "();")
                 # Begin loop
                 self._beginBlock("for (int i = 0; i < " + repetitionString + "; i++)")
+                # Wrap with try
+                self._beginBlock("try")
                 # Main handler
                 handleRepeatingLineForField(field)
                 # Check for newline
@@ -211,6 +213,15 @@ class JavaGenerator(CodeGenerator):
                     self._beginBlock("if (i != " + repetitionString + " - 1)")
                     handleEmptyLine()
                     self._endBlock()
+                # End try
+                self._endBlock()
+                # Catch any error to throw appropriate error message
+                self._beginBlock("catch (Exception e)")
+                writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +"
+                    + "\": Expecting exactly \" + " + repetitionString + " + \" \\\"" + field.typeName()
+                    + "\\\" when parsing \\\"" + className + "." + field.name()
+                    + "\\\" (\" + i + \" found).\");")
+                self._endBlock()
                 # End loop
                 self._endBlock()
             elif line.isZeroOrMoreRepetition():
@@ -262,8 +273,10 @@ class JavaGenerator(CodeGenerator):
                 # Catch any errors, either (1) reset line number and continue (2) error if did not repeat once
                 self._beginBlock("catch (Exception e)")
                 self._beginBlock("if (!didRepeatOnce)")
-                writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +" +
-                    "\": Expecting at least 1 " + field.typeName() + " (0 found)\");")
+                writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] +"
+                    + "\": Expecting at least 1 \\\"" + field.typeName()
+                    + "\\\" when parsing \\\"" + className + "." + field.name()
+                    + "\\\" (0 found).\");")
                 self._endBlock()
                 writeLine("seek(f, prevFilePos);")
                 writeLine("lineNumber[0] = prevLineNumber;")
@@ -336,7 +349,7 @@ class JavaGenerator(CodeGenerator):
         writeLine("String line;")
         self._beginBlock("while ((line = f.readLine()) != null)")
         self._beginBlock("if (!line.equals(\"\"))")
-        writeLine("throw new RuntimeException(\"Parser Error: Did not reach end of file\");")
+        writeLine("throw new RuntimeException(\"Parser Error on line \" + lineNumber[0] + \": Finished parsing but did not reach end of file.\");")
         self._endBlock()
         self._endBlock()
         # Finish up
@@ -344,28 +357,23 @@ class JavaGenerator(CodeGenerator):
         writeLine("return result;")
         self._endBlock()
 
-        # Catch end of file
-        self._beginBlock("catch (EOFException e)")
-        writeLine("System.err.println(\"Parser Error: Reached end of file before finished parsing\");")
-        writeLine("System.exit(1);")
-        self._endBlock()
         # Catch file not found
         self._beginBlock("catch (FileNotFoundException e)")
-        writeLine("System.err.println(\"Input file '\" + filename + \"' not found\");")
+        writeLine("System.err.println(\"Input file '\" + filename + \"' not found.\");")
         writeLine("System.exit(1);")
         self._endBlock()
         # Catch random IOExceptions
         self._beginBlock("catch (IOException e)")
-        writeLine("System.err.println(\"Could not open '\" + filename + \"'\");")
+        writeLine("System.err.println(\"Could not open \\\"\" + filename + \"\\\".\");")
         self._endBlock()
-        # All other exception catches
+        # All other exception catches (EOF exception caught here)
         self._beginBlock("catch (Exception e)")
         writeLine("System.err.println(e.getMessage());")
         writeLine("System.exit(1);")
         self._endBlock()
 
         # Should never reach this line
-        writeLine("System.err.println(\"Unknown error occurred\");")
+        writeLine("System.err.println(\"Unknown error occurred.\");")
         writeLine("System.exit(1);")
         writeLine("return null;")
 

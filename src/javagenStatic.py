@@ -12,7 +12,7 @@ public static int javagenParseInt(String s, int[] lineNumber)
 \tcatch (NumberFormatException e)
 \t{
 \t\tthrow new NumberFormatException(
-\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as int\");
+\t\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse \\"" + s + "\\" as int.");
 \t}
 }
 
@@ -27,7 +27,7 @@ public static boolean javagenParseBool(String s, int[] lineNumber)
 \t\treturn false;
 \t}
 \tthrow new NumberFormatException(
-\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as bool\");
+\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse \\"" + s + "\\" as bool.");
 }
 
 public static String javagenParseString(String s, int[] lineNumber)
@@ -44,7 +44,7 @@ public static float javagenParseFloat(String s, int[] lineNumber)
 \tcatch (NumberFormatException e)
 \t{
 \t\tthrow new NumberFormatException(
-\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse \" + s + \" as float\");
+\t\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse \\"" + s + "\\" as float.");
 \t}
 }
 
@@ -52,7 +52,7 @@ public static ArrayList<Integer> javagenParseIntList(String[] strings, int[] lin
 {
 \tif (strings.length == 0)
 \t\tthrow new NumberFormatException(
-\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
+\t\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse empty string as list.");
 \tArrayList<Integer> resval = new ArrayList<Integer>();
 \tfor (String s : strings)
 \t\tresval.add(javagenParseInt(s, lineNumber));
@@ -63,7 +63,7 @@ public static ArrayList<Boolean> javagenParseBoolList(String[] strings, int[] li
 {
 \tif (strings.length == 0)
 \t\tthrow new NumberFormatException(
-\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
+\t\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse empty string as list.");
 \tArrayList<Boolean> resval = new ArrayList<Boolean>();
 \tfor (String s : strings)
 \t\tresval.add(javagenParseBool(s, lineNumber));
@@ -74,7 +74,7 @@ public static ArrayList<String> javagenParseStringList(String[] strings, int[] l
 {
 \tif (strings.length == 0)
 \t\tthrow new NumberFormatException(
-\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
+\t\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse empty string as list.");
 \tArrayList<String> resval = new ArrayList<String>();
 \tfor (String s : strings)
 \t\tresval.add(javagenParseString(s, lineNumber));
@@ -85,24 +85,24 @@ public static ArrayList<Float> javagenParseFloatList(String[] strings, int[] lin
 {
 \tif (strings.length == 0)
 \t\tthrow new NumberFormatException(
-\t\t\t\"Parser Error on line \" + lineNumber[0] + \": Could not parse empty string as list\");
+\t\t\t"Parser Error on line " + lineNumber[0] + ": Could not parse empty string as list.");
 \tArrayList<Float> resval = new ArrayList<Float>();
 \tfor (String s : strings)
 \t\tresval.add(javagenParseFloat(s, lineNumber));
 \treturn resval;
 }
 
-public static String readLine(RandomAccessFile f)
+public static String readLine(RandomAccessFile f, String className)
 {
 \ttry
 \t{
 \t\tString result = f.readLine();
-\t\tif (result == null) throw new EOFException();
+\t\tif (result == null) throw new RuntimeException("Parser Error: Reached end of file while parsing object \\"" + className + "\\".");
 \t\treturn result;
 \t}
 \tcatch (IOException e)
 \t{
-\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file");
+\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file.");
 \t}
 }
 
@@ -114,7 +114,7 @@ public static void seek(RandomAccessFile f, long pos)
 \t}
 \tcatch (IOException e)
 \t{
-\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file");
+\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file.");
 \t}
 }
 
@@ -126,7 +126,7 @@ public static long getFilePointer(RandomAccessFile f)
 \t}
 \tcatch (IOException e)
 \t{
-\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file");
+\t\tthrow new RuntimeException("IO Error: Unknown problem when reading input file.");
 \t}
 }
 """

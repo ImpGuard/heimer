@@ -3,28 +3,24 @@ from util import HeimerFile
 
 def pygenStaticHelpers():
     helpers = """
-def readline(inputFile):
+def readline(inputFile, className):
 \tline = inputFile.readline()
 \tif line == "":
-\t\traise EOFError()
+\t\traise ValueError("Parser Error: Reached end of file while parsing object \\"" + className + "\\".")
 \treturn line.strip()
 
 def intParse( s, currentLineNumber ):
 \ttry:
 \t\treturn int(s)
 \texcept ValueError as e:
-\t\traise ValueError("Parser Error on line %d: Cannot parse '%s' as int." % ( currentLineNumber, s ))
+\t\traise ValueError("Parser Error on line %d: Could not parse \\\"%s\\\" as int." % ( currentLineNumber, s ))
 
 def boolParse( s, currentLineNumber ):
-\ttrueStrings = ["1", "true", "True"]
-\tfalseStrings = ["0", "false", "False"]
-\tif s in trueStrings:
+\tif s == "1" or s.lower() == "true":
 \t\treturn True
-\telif s in falseStrings:
+\telif s == "0" or s.lower() == "false":
 \t\treturn False
-\telse:
-\t\traise ValueError("Parser Error on line %d: Cannot parse '%s' as bool, it must either be '1', '0', \
-    'true', 'True', 'false' or 'False'." % ( currentLineNumber, s ))
+\traise ValueError("Parser Error on line %d: Could not parse \\\"%s\\\" as bool." % ( currentLineNumber, s ))
 
 def stringParse( s, currentLineNumber ):
 \treturn s
@@ -33,7 +29,7 @@ def floatParse( s, currentLineNumber ):
 \ttry:
 \t\treturn float(s)
 \texcept ValueError as e:
-\t\traise ValueError("Parser Error on line %d: Cannot parse '%s' as float." % ( currentLineNumber, s ))
+\t\traise ValueError("Parser Error on line %d: Could not parse \\\"%s\\\" as float." % ( currentLineNumber, s ))
 
 def intListParse( strings, currentLineNumber ):
 \tintList = []
