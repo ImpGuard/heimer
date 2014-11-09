@@ -1,6 +1,12 @@
 # Sublime projects
 *.sublime-workspace
 
+# Temporary directories
+tmp*
+
+# Output
+out.py
+
 # Useless DS_Store
 *.DS_Store
 
