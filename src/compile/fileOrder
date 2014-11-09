@@ -6,4 +6,6 @@ javagenStatic
 javagen
 pygenStatic
 pygen
+cppgenStatic
+cppgen
 main
