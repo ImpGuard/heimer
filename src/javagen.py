@@ -304,7 +304,6 @@ class JavaGenerator(CodeGenerator):
     def generateMainFileHeader(self):
         """ For generating the main file header, such as the import statements. """
         # Import library headers
-        self.currentFile.writeLine("import java.util.ArrayList;")
         self.currentFile.writeLine("import java.io.RandomAccessFile;")
         self.currentFile.writeLine("import java.io.FileNotFoundException;")
         self.currentFile.writeLine("import java.io.IOException;")
