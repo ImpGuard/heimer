@@ -95,16 +95,16 @@ class FormatFileObjectModel:
             result += ParserUtil.classDeclarationsAsString(self.classes) + "\n"
         return result[:-1]
 
-class HeimerFormatFileParser:
+class InstaParseFormatFileParser:
 
     def __init__( self, formatFileName ):
         self.tagLineMarkerIntervals = {}
         self.failureMessages = []
         self.objectModel = FormatFileObjectModel()
         try:
-            heimerFile = open( formatFileName, "r" )
-            self.formatInputAsLines = [line.strip() for line in heimerFile.readlines()]
-            heimerFile.close()
+            InstaparseFile = open( formatFileName, "r" )
+            self.formatInputAsLines = [line.strip() for line in InstaparseFile.readlines()]
+            InstaparseFile.close()
         except IOError:
             return self.pushFailureMessage("Could not find file " + formatFileName + ".")
             self.formatInputAsLines = []

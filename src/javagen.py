@@ -10,7 +10,7 @@ class JavaGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        HeimerFile.commentString = "//"
+        InstaParseFile.commentString = "//"
         self.main.setExtension("java")
         self.util.setExtension("java")
         self.classFiles = []
@@ -33,7 +33,7 @@ class JavaGenerator(CodeGenerator):
         data structure). The first argument is the class name and the second argument is a list of
         fields (in order) of that class. """
         self.typeNameToParseFuncName[className] = "parse%s" % className
-        classFile = HeimerFile(join(self.foldername, className + ".java"))
+        classFile = InstaParseFile(join(self.foldername, className + ".java"))
         self.classFiles.append(classFile)
         self.currentFile = classFile
 

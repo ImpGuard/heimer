@@ -10,7 +10,7 @@ class CPPGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        HeimerFile.commentString = "//"
+        InstaParseFile.commentString = "//"
         self.main.setExtension("cpp")
         self.util.setExtension("h")
         self.data.setExtension("h")

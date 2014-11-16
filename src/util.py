@@ -1,4 +1,4 @@
-class HeimerFile:
+class InstaParseFile:
     """ Simple custom file class used by code generation components. """
 
     indentString = "    "
@@ -26,7 +26,7 @@ class HeimerFile:
         It will indent only if the most recent `write` call is a `writeLine` or `writeNewline` (
         ignoring other methods in this class). """
         if self.shouldIndent:
-            self.fileContents += HeimerFile.indentString * self.indentLevel + line
+            self.fileContents += InstaParseFile.indentString * self.indentLevel + line
         else:
             self.fileContents += line
         self.shouldIndent = False
@@ -45,7 +45,7 @@ class HeimerFile:
         self.shouldIndent = True
 
     def save(self):
-        """ Saves the HeimerFile. Ideally, use only once per HeimerFile at the end of code generation. """
+        """ Saves the InstaParseFile. Ideally, use only once per InstaParseFile at the end of code generation. """
         outputFile = open( self.filename, "w")
         outputFile.write(self.fileContents)
         outputFile.close()

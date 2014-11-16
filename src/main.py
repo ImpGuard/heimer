@@ -1,5 +1,5 @@
-from parser import HeimerFormatFileParser
-from converter import HeimerFormat
+from parser import InstaParseFormatFileParser
+from converter import InstaParseFormat
 from pygen import PythonGenerator
 from javagen import JavaGenerator
 from cppgen import CPPGenerator
@@ -40,13 +40,13 @@ if __name__ == "__main__":
         exit(1)
 
     # Parser format file into a object model
-    parser = HeimerFormatFileParser(args[0])
+    parser = InstaParseFormatFileParser(args[0])
     if parser.parseFailed():
         parser.printFailures()
         exit(1)
 
     # Generate a format object from the object model
-    formatObject = HeimerFormat(parser.objectModel)
+    formatObject = InstaParseFormat(parser.objectModel)
 
     # Depending on output language, call the associated code generator
     generator = None

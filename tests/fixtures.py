@@ -1,8 +1,8 @@
 from src.javagen import JavaGenerator
 from src.pygen import PythonGenerator
 from src.cppgen import CPPGenerator
-from src.parser import HeimerFormatFileParser
-from src.converter import HeimerFormat
+from src.parser import InstaParseFormatFileParser
+from src.converter import InstaParseFormat
 
 from os import chdir, getcwd, mkdir
 from os.path import dirname, basename, join, isdir
@@ -82,10 +82,10 @@ class GeneratorFixture:
 
         Either returns the associated generator or raises a ValueError.
         """
-        parser = HeimerFormatFileParser(formatFileName)
+        parser = InstaParseFormatFileParser(formatFileName)
         if parser.parseFailed():
             raise ValueError(parser.failureString())
-        formatObject = HeimerFormat(parser.objectModel)
+        formatObject = InstaParseFormat(parser.objectModel)
         return self.generatorType( self.mainFileName, formatObject )
 
     def _createReturnValue( self, testID, expectedOutcome, outcome, msg ):

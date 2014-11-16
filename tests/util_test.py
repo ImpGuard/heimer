@@ -9,8 +9,8 @@ def removeFiles():
     os.remove(filename)
 
 @with_setup(teardown = removeFiles)
-def testBasicHeimerFile():
-    simpleFile = HeimerFile(filename)
+def testBasicInstaParseFile():
+    simpleFile = InstaParseFile(filename)
     simpleFile.write("abc")
     simpleFile.save()
     simpleFile.writeLine("def")
@@ -23,8 +23,8 @@ def testBasicHeimerFile():
     resultFile.close()
 
 @with_setup(teardown = removeFiles)
-def testHeimerFileComments():
-    simpleFile = HeimerFile(filename)
+def testInstaParseFileComments():
+    simpleFile = InstaParseFile(filename)
     simpleFile.writeLine("abc")
     simpleFile.comment("The above is an abc.")
     simpleFile.save()
@@ -35,8 +35,8 @@ def testHeimerFileComments():
     resultFile.close()
 
 @with_setup(teardown = removeFiles)
-def testHeimerImport():
-    simpleFile = HeimerFile(filename)
+def testInstaParseImport():
+    simpleFile = InstaParseFile(filename)
     simpleFile.writeLine("abc")
     simpleFile.writeImportLine("import a simple library")
     simpleFile.save()
@@ -47,8 +47,8 @@ def testHeimerImport():
     resultFile.close()
 
 @with_setup(teardown = removeFiles)
-def testHeimerWrite():
-    simpleFile = HeimerFile(filename)
+def testInstaParseWrite():
+    simpleFile = InstaParseFile(filename)
     simpleFile.indent()
     simpleFile.write("abc")
     simpleFile.write("def")

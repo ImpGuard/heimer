@@ -29,7 +29,7 @@ class PythonGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        HeimerFile.commentString = "#"
+        InstaParseFile.commentString = "#"
         self.main.setExtension("py")
         self.util.setExtension("py")
         self.data.setExtension("py")

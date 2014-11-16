@@ -1,11 +1,11 @@
-from util import HeimerFile, StringConstants
+from util import InstaParseFile, StringConstants
 from os.path import dirname, basename, join
 
 class CodeGenerator:
-    """ Base class for generating the parser code. Subclass this for every language supported by Heimer. """
+    """ Base class for generating the parser code. Subclass this for every language supported by InstaParse. """
 
     # Namespace
-    PARSER_NAME = "Heimer"
+    PARSER_NAME = "InstaParse"
 
     # Filenames
     UTIL_FILE_NAME = PARSER_NAME + "Util"
@@ -30,9 +30,9 @@ class CodeGenerator:
     def __init__( self, filename, format ):
         self.foldername = dirname(filename)
         self.filename = basename(filename)
-        self.main = HeimerFile(filename)
-        self.util = HeimerFile(join(self.foldername, CodeGenerator.UTIL_FILE_NAME))
-        self.data = HeimerFile(join(self.foldername, CodeGenerator.DATA_FILE_NAME))
+        self.main = InstaParseFile(filename)
+        self.util = InstaParseFile(join(self.foldername, CodeGenerator.UTIL_FILE_NAME))
+        self.data = InstaParseFile(join(self.foldername, CodeGenerator.DATA_FILE_NAME))
         self.format = format
         self.classes = format.classes()
         self.bodyTypeName = format.bodyTypeName()

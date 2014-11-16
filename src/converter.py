@@ -2,7 +2,7 @@ from parser import FieldDeclaration
 from collections import OrderedDict
 from util import *
 
-class HeimerFormat:
+class InstaParseFormat:
     def __init__( self, objectModel ):
         self._model = objectModel
         self._userClasses = OrderedDict()
@@ -239,6 +239,6 @@ def _assertValidClass( c, userClasses ):
                     raise ValueError("Format error in user defined class '%s': unexpected field type '%s', there can be exactly one field with user defined class as type in each line." % ( c.name, field.tpyName))
 
 def getFormat(fileName):
-    from parser import HeimerFormatFileParser
-    p = HeimerFormatFileParser(fileName)
-    return HeimerFormat(p.objectModel)
+    from parser import InstaParseFormatFileParser
+    p = InstaParseFormatFileParser(fileName)
+    return InstaParseFormat(p.objectModel)

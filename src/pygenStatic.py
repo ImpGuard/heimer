@@ -1,5 +1,5 @@
 from codegen import CodeGenerator
-from util import HeimerFile
+from util import InstaParseFile
 
 def pygenStaticHelpers():
     helpers = """
@@ -75,6 +75,6 @@ def floatListParse( strings, currentLineNumber ):
     helpers = helpers.replace( "floatListParse", CodeGenerator.PARSE_FLOAT_LIST )
 
     # Replace the tabs with the appropriate amount of indent spaces
-    helpers = helpers.replace( "\t", HeimerFile.indentString )
+    helpers = helpers.replace( "\t", InstaParseFile.indentString )
 
     return helpers

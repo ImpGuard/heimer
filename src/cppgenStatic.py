@@ -1,5 +1,5 @@
 from codegen import CodeGenerator
-from util import HeimerFile
+from util import InstaParseFile
 
 def cppgenStaticHelpers():
     helpers = """
@@ -227,6 +227,6 @@ std::streampos getFilePointer(std::ifstream &f)
     helpers = helpers.replace("cppgenParseFloat", CodeGenerator.PARSE_FLOAT)
 
     # Replace the tabs with the appropriate amount of indent spaces
-    helpers = helpers.replace( "    ", HeimerFile.indentString )
+    helpers = helpers.replace( "    ", InstaParseFile.indentString )
 
     return helpers
