@@ -48,6 +48,7 @@ if __name__ == "__main__":
                 result += field + ", "
             writeLine(result[:-2])
 
+    writeLine("")
     importFile.close()
 
     # Write files in the order specified

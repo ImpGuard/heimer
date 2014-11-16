@@ -5,7 +5,8 @@ from sys import exit
 from collections import OrderedDict
 from os.path import dirname, basename, join, splitext
 from optparse import OptionParser
-class HeimerFile:
+
+class InstaParseFile:
     """ Simple custom file class used by code generation components. """
 
     indentString = "    "
@@ -33,7 +34,7 @@ class HeimerFile:
         It will indent only if the most recent `write` call is a `writeLine` or `writeNewline` (
         ignoring other methods in this class). """
         if self.shouldIndent:
-            self.fileContents += HeimerFile.indentString * self.indentLevel + line
+            self.fileContents += InstaParseFile.indentString * self.indentLevel + line
         else:
             self.fileContents += line
         self.shouldIndent = False
@@ -52,7 +53,7 @@ class HeimerFile:
         self.shouldIndent = True
 
     def save(self):
-        """ Saves the HeimerFile. Ideally, use only once per HeimerFile at the end of code generation. """
+        """ Saves the InstaParseFile. Ideally, use only once per InstaParseFile at the end of code generation. """
         outputFile = open( self.filename, "w")
         outputFile.write(self.fileContents)
         outputFile.close()
@@ -212,16 +213,16 @@ class FormatFileObjectModel:
             result += ParserUtil.classDeclarationsAsString(self.classes) + "\n"
         return result[:-1]
 
-class HeimerFormatFileParser:
+class InstaParseFormatFileParser:
 
     def __init__( self, formatFileName ):
         self.tagLineMarkerIntervals = {}
         self.failureMessages = []
         self.objectModel = FormatFileObjectModel()
         try:
-            heimerFile = open( formatFileName, "r" )
-            self.formatInputAsLines = [line.strip() for line in heimerFile.readlines()]
-            heimerFile.close()
+            InstaparseFile = open( formatFileName, "r" )
+            self.formatInputAsLines = [line.strip() for line in InstaparseFile.readlines()]
+            InstaparseFile.close()
         except IOError:
             return self.pushFailureMessage("Could not find file " + formatFileName + ".")
             self.formatInputAsLines = []
@@ -355,7 +356,7 @@ class HeimerFormatFileParser:
                     break
 
 
-class HeimerFormat:
+class InstaParseFormat:
     def __init__( self, objectModel ):
         self._model = objectModel
         self._userClasses = OrderedDict()
@@ -592,16 +593,16 @@ def _assertValidClass( c, userClasses ):
                     raise ValueError("Format error in user defined class '%s': unexpected field type '%s', there can be exactly one field with user defined class as type in each line." % ( c.name, field.tpyName))
 
 def getFormat(fileName):
-    from parser import HeimerFormatFileParser
-    p = HeimerFormatFileParser(fileName)
-    return HeimerFormat(p.objectModel)
+    from parser import InstaParseFormatFileParser
+    p = InstaParseFormatFileParser(fileName)
+    return InstaParseFormat(p.objectModel)
 
 
 class CodeGenerator:
-    """ Base class for generating the parser code. Subclass this for every language supported by Heimer. """
+    """ Base class for generating the parser code. Subclass this for every language supported by InstaParse. """
 
     # Namespace
-    PARSER_NAME = "Heimer"
+    PARSER_NAME = "InstaParse"
 
     # Filenames
     UTIL_FILE_NAME = PARSER_NAME + "Util"
@@ -626,9 +627,9 @@ class CodeGenerator:
     def __init__( self, filename, format ):
         self.foldername = dirname(filename)
         self.filename = basename(filename)
-        self.main = HeimerFile(filename)
-        self.util = HeimerFile(join(self.foldername, CodeGenerator.UTIL_FILE_NAME))
-        self.data = HeimerFile(join(self.foldername, CodeGenerator.DATA_FILE_NAME))
+        self.main = InstaParseFile(filename)
+        self.util = InstaParseFile(join(self.foldername, CodeGenerator.UTIL_FILE_NAME))
+        self.data = InstaParseFile(join(self.foldername, CodeGenerator.DATA_FILE_NAME))
         self.format = format
         self.classes = format.classes()
         self.bodyTypeName = format.bodyTypeName()
@@ -883,7 +884,7 @@ public static long getFilePointer(RandomAccessFile f)
     helpers = helpers.replace("javagenParseFloat", CodeGenerator.PARSE_FLOAT)
 
     # Replace the tabs with the appropriate amount of indent spaces
-    helpers = helpers.replace( "\t", HeimerFile.indentString )
+    helpers = helpers.replace( "\t", InstaParseFile.indentString )
 
     return helpers
 
@@ -894,7 +895,7 @@ class JavaGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        HeimerFile.commentString = "//"
+        InstaParseFile.commentString = "//"
         self.main.setExtension("java")
         self.util.setExtension("java")
         self.classFiles = []
@@ -917,7 +918,7 @@ class JavaGenerator(CodeGenerator):
         data structure). The first argument is the class name and the second argument is a list of
         fields (in order) of that class. """
         self.typeNameToParseFuncName[className] = "parse%s" % className
-        classFile = HeimerFile(join(self.foldername, className + ".java"))
+        classFile = InstaParseFile(join(self.foldername, className + ".java"))
         self.classFiles.append(classFile)
         self.currentFile = classFile
 
@@ -1375,7 +1376,7 @@ def floatListParse( strings, currentLineNumber ):
     helpers = helpers.replace( "floatListParse", CodeGenerator.PARSE_FLOAT_LIST )
 
     # Replace the tabs with the appropriate amount of indent spaces
-    helpers = helpers.replace( "\t", HeimerFile.indentString )
+    helpers = helpers.replace( "\t", InstaParseFile.indentString )
 
     return helpers
 
@@ -1406,7 +1407,7 @@ class PythonGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        HeimerFile.commentString = "#"
+        InstaParseFile.commentString = "#"
         self.main.setExtension("py")
         self.util.setExtension("py")
         self.data.setExtension("py")
@@ -1909,7 +1910,7 @@ std::streampos getFilePointer(std::ifstream &f)
     helpers = helpers.replace("cppgenParseFloat", CodeGenerator.PARSE_FLOAT)
 
     # Replace the tabs with the appropriate amount of indent spaces
-    helpers = helpers.replace( "    ", HeimerFile.indentString )
+    helpers = helpers.replace( "    ", InstaParseFile.indentString )
 
     return helpers
 
@@ -1920,7 +1921,7 @@ class CPPGenerator(CodeGenerator):
 
     def initialize(self):
         """ Perform additional initialization if required. """
-        HeimerFile.commentString = "//"
+        InstaParseFile.commentString = "//"
         self.main.setExtension("cpp")
         self.util.setExtension("h")
         self.data.setExtension("h")
@@ -2385,13 +2386,13 @@ if __name__ == "__main__":
         exit(1)
 
     # Parser format file into a object model
-    parser = HeimerFormatFileParser(args[0])
+    parser = InstaParseFormatFileParser(args[0])
     if parser.parseFailed():
         parser.printFailures()
         exit(1)
 
     # Generate a format object from the object model
-    formatObject = HeimerFormat(parser.objectModel)
+    formatObject = InstaParseFormat(parser.objectModel)
 
     # Depending on output language, call the associated code generator
     generator = None
