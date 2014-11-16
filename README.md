@@ -1,4 +1,4 @@
-heimer
+instaparse
 ======
 
 A python script that generates simple file parsers.
@@ -8,7 +8,7 @@ Development
 
 To get the package simply pull from the repository:
 
-    git clone https://github.com/ImpGuard/heimer.git <project_directory>
+    git clone https://github.com/ImpGuard/instaparse.git <project_directory>
 
 In order to install the dependencies, navigate to the project directory and use
 pip. Note using virtualenv in this example is optional:
@@ -20,7 +20,7 @@ pip. Note using virtualenv in this example is optional:
     ...
     deactivate                      # Leave the virtual environment when work is finished
 
-All the source files are located within the folder `heimer`. In order to test
+All the source files are located within the folder `instaparse`. In order to test
 the script, use nose within the home directory (which is installed as a
 dependency):
 

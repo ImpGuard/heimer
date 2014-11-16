@@ -1,7 +1,7 @@
 Overview
 ========
 
-The Heimer script takes a format file and generates a parser which will parse
+The InstaParse script takes a format file and generates a parser which will parse
 files for the format specified by the format file. It supports generating parser
 code in Python, C++, and Java and can be extended to other languages in the
 future.
@@ -15,14 +15,14 @@ terminology will be used in this specification to make it clear what is being
 referred to.
 
     Figure of I/O sequence:
-    ( Format File ) => | Heimer Script | => ( Parser )
+    ( Format File ) => | InstaParse Script | => ( Parser )
     ( Input File  ) => | Parser | => ( User Actions )
 
 **Format File**: 
 This file specifies the format of the file that the Parser being generated will
 is required to parse.
 
-**Heimer Script**:  
+**InstaParse Script**:  
 The script that will generate a parser from the provided Format File.
 
 **Parser**:  
@@ -43,7 +43,7 @@ The Format File consists of 4 tags, enclosed by angled brackets, and the
 corresponding information under each tag.
 
 **\<head\>**  
-    Contains Heimer-specific options and flags.
+    Contains InstaParse-specific options and flags.
 
 **\<options\>**  
     Contains the command-line options that the generated Parser will be able to
@@ -61,7 +61,7 @@ corresponding information under each tag.
 The \<head\> tag
 ==============
 
-The **\<head\>** tag contains Heimer-specific options and flags. The supported
+The **\<head\>** tag contains InstaParse-specific options and flags. The supported
 flags are noted here:
 
 delimiter "[string]"
@@ -283,7 +283,7 @@ expect the input file to have the overall format of the lines under the
 Primitive Types
 ===============
 
-The primitive types that HeimerScript supports are integers, floats, strings,
+The primitive types that InstaParseScript supports are integers, floats, strings,
 bools, and list\<primitive\>. For the most part, these are self explanatory, but
 some edge cases are noted here:
 
@@ -300,7 +300,7 @@ symbol. Anything after a `#` is ignored in the Format File.
 Examples
 ========
 
-A couple of examples are listed here showcasing the abilities of the Heimer
+A couple of examples are listed here showcasing the abilities of the InstaParse
 Script and the flexibility of the Format File.
 
 Graph Parser
