@@ -2319,6 +2319,8 @@ class CPPGenerator(CodeGenerator):
     def _getBasicTypeName( self, typeName ):
         if isInteger(typeName):
             return "int"
+        elif isFloat(typeName):
+            return "float"
         elif isString(typeName):
             return "std::string"
         elif isBool(typeName):

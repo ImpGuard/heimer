@@ -387,6 +387,8 @@ class JavaGenerator(CodeGenerator):
     def _getBasicTypeName( self, typeName ):
         if isInteger(typeName):
             return "Integer"
+        if isFloat(typeName):
+            return "Float"
         elif isString(typeName):
             return "String"
         elif isBool(typeName):
