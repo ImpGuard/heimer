@@ -53,7 +53,7 @@ std::string lowercase(std::string &s)
 \t{
 \t\tresult[i] = tolower(s[i]);
 \t}
-\tresult[s.length()] = NULL;
+\tresult[s.length()] = '\0';
 \treturn string(result);
 }
 
