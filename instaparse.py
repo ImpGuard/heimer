@@ -2325,6 +2325,8 @@ class CPPGenerator(CodeGenerator):
             return "std::string"
         elif isBool(typeName):
             return "bool"
+        elif isFloat(typeName):
+            return "float"
         elif isList(typeName):
             return "std::vector<" + self._getBasicTypeName(listType(typeName)) + ">"
         else:
