@@ -117,7 +117,7 @@ class CPPGenerator(CodeGenerator):
 
         def handleEmptyLine():
             # Handle the empty line case
-            self._beginBlock("if (!trim(readLine(f, \"" + className + "\")).compare(\"\") == 0)")
+            self._beginBlock("if (!(trim(readLine(f, \"" + className + "\")).compare(\"\") == 0))")
             writeLine("stringstream err;")
             writeLine("err << \"Parser Error on line \"  << lineNumber << " +
                 "\": Should be an empty line.\";")
