@@ -1272,6 +1272,8 @@ class JavaGenerator(CodeGenerator):
     def _getBasicTypeName( self, typeName ):
         if isInteger(typeName):
             return "Integer"
+        if isFloat(typeName):
+            return "Float"
         elif isString(typeName):
             return "String"
         elif isBool(typeName):
@@ -1736,7 +1738,7 @@ std::string lowercase(std::string &s)
 \t{
 \t\tresult[i] = tolower(s[i]);
 \t}
-\tresult[s.length()] = NULL;
+\tresult[s.length()] = '\0';
 \treturn string(result);
 }
 
@@ -2028,7 +2030,7 @@ class CPPGenerator(CodeGenerator):
 
         def handleEmptyLine():
             # Handle the empty line case
-            self._beginBlock("if (!trim(readLine(f, \"" + className + "\")).compare(\"\") == 0)")
+            self._beginBlock("if (!(trim(readLine(f, \"" + className + "\")).compare(\"\") == 0))")
             writeLine("stringstream err;")
             writeLine("err << \"Parser Error on line \"  << lineNumber << " +
                 "\": Should be an empty line.\";")
@@ -2319,8 +2321,6 @@ class CPPGenerator(CodeGenerator):
     def _getBasicTypeName( self, typeName ):
         if isInteger(typeName):
             return "int"
-        elif isFloat(typeName):
-            return "float"
         elif isString(typeName):
             return "std::string"
         elif isBool(typeName):
